@@ -8,7 +8,7 @@ const Color = rl.Color;
 
 const Player = @This();
 
-pos: Vector2,
+pos: Vector2, // top left corner
 size: Vector2 = Vector2.init(32, 32),
 color: Color,
 velocity: Vector2 = Vector2.init(1, 0),
