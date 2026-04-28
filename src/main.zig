@@ -24,16 +24,16 @@ pub fn main() anyerror!void {
         // Update
         //----------------------------------------------------------------------------------
         if (rl.isKeyPressed(.up)) {
-            try player.switchDirection(.up);
+            player.switchDirection(.up);
         }
         if (rl.isKeyPressed(.down)) {
-            try player.switchDirection(.down);
+            player.switchDirection(.down);
         }
         if (rl.isKeyPressed(.right)) {
-            try player.switchDirection(.right);
+            player.switchDirection(.right);
         }
         if (rl.isKeyPressed(.left)) {
-            try player.switchDirection(.left);
+            player.switchDirection(.left);
         }
         //----------------------------------------------------------------------------------
 

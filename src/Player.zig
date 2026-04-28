@@ -46,16 +46,16 @@ pub fn drawPlayer(self: *Player) void {
     rl.drawRectangleV(self.pos, self.size, self.color);
 }
 
-pub fn switchDirection(self: *Player, direction: Direction) !void {
+pub fn switchDirection(self: *Player, direction: Direction) void {
     log.info("switch direction to: {s}", .{@tagName(direction)});
     switch (direction) {
         .up => {
             self.velocity.x = 0;
-            self.velocity.y = 1;
+            self.velocity.y = -1;
         },
         .down => {
             self.velocity.x = 0;
-            self.velocity.y = -1;
+            self.velocity.y = 1;
         },
         .left => {
             self.velocity.x = -1;
@@ -81,7 +81,7 @@ test "switch direction success" {
     testing.expectEqual(Vector2.init(1, 0), sut.velocity);
 
     sut.switchDirection(.up);
-    testing.expectEqual(Vector2.init(0, 1), sut.velocity);
+    testing.expectEqual(Vector2.init(0, -1), sut.velocity);
 
     sut.switchDirection(.left);
     testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
