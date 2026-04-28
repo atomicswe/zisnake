@@ -1,6 +1,7 @@
 const std = @import("std");
 const rl = @import("raylib");
 const Player = @import("Player.zig");
+const Apple = @import("Apple.zig");
 const log = std.log;
 
 pub fn main() anyerror!void {
@@ -15,6 +16,7 @@ pub fn main() anyerror!void {
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
 
     var player = Player.init(screenWidth, screenHeight);
+    var apple = Apple.init((screenWidth / 2) + 100, (screenHeight / 2) - 100);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -42,7 +44,8 @@ pub fn main() anyerror!void {
 
         rl.clearBackground(.black);
 
-        try player.drawPlayer();
+        player.drawPlayer();
+        apple.drawApple();
 
         //----------------------------------------------------------------------------------
     }

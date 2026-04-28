@@ -28,7 +28,7 @@ pub fn init(screenWidth: f32, screenHeight: f32) Player {
     return .{ .pos = pos, .size = size, .color = .maroon, .screenWidth = screenWidth, .screenHeight = screenHeight };
 }
 
-pub fn drawPlayer(self: *Player) !void {
+pub fn drawPlayer(self: *Player) void {
     self.pos = Vector2.add(self.pos, self.velocity);
 
     if (self.pos.x > self.screenWidth and self.velocity.equals(Vector2.init(1, 0))) {
