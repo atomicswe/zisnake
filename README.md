@@ -1,2 +1,3 @@
-# game
-Game made in Zig with ray lib
+# zisnake
+
+Snake game made in Zig with ray lib
