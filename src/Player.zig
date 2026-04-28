@@ -70,4 +70,19 @@ pub fn switchDirection(self: *Player, direction: Direction) !void {
 
 test "player init" {
     const sut = init(100, 100);
+
+    testing.expectEqual(Vector2.init(50, 50), sut.pos);
+}
+
+test "switch direction success" {
+    var sut = init(100, 100);
+
+    testing.expectEqual(Vector2.init(50, 50), sut.pos);
+    testing.expectEqual(Vector2.init(1, 0), sut.velocity);
+
+    sut.switchDirection(.up);
+    testing.expectEqual(Vector2.init(0, 1), sut.velocity);
+
+    sut.switchDirection(.left);
+    testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
 }
