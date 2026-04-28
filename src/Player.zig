@@ -9,7 +9,7 @@ const Color = rl.Color;
 const Player = @This();
 
 pos: Vector2,
-size: Vector2,
+size: Vector2 = Vector2.init(32, 32),
 color: Color,
 velocity: Vector2 = Vector2.init(1, 0),
 screenWidth: f32,
@@ -24,8 +24,7 @@ pub const Direction = enum {
 
 pub fn init(screenWidth: f32, screenHeight: f32) Player {
     const pos = Vector2.init(screenWidth / 2, screenHeight / 2);
-    const size = Vector2.init(50, 50);
-    return .{ .pos = pos, .size = size, .color = .maroon, .screenWidth = screenWidth, .screenHeight = screenHeight };
+    return .{ .pos = pos, .color = .maroon, .screenWidth = screenWidth, .screenHeight = screenHeight };
 }
 
 pub fn drawPlayer(self: *Player) void {
@@ -71,18 +70,18 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
 test "player init" {
     const sut = init(100, 100);
 
-    testing.expectEqual(Vector2.init(50, 50), sut.pos);
+    try testing.expectEqual(Vector2.init(50, 50), sut.pos);
 }
 
 test "switch direction success" {
     var sut = init(100, 100);
 
-    testing.expectEqual(Vector2.init(50, 50), sut.pos);
-    testing.expectEqual(Vector2.init(1, 0), sut.velocity);
+    try testing.expectEqual(Vector2.init(50, 50), sut.pos);
+    try testing.expectEqual(Vector2.init(1, 0), sut.velocity);
 
     sut.switchDirection(.up);
-    testing.expectEqual(Vector2.init(0, -1), sut.velocity);
+    try testing.expectEqual(Vector2.init(0, -1), sut.velocity);
 
     sut.switchDirection(.left);
-    testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
+    try testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
 }

@@ -21,14 +21,7 @@ pub fn drawApple(self: *Apple) void {
     rl.drawCircleV(self.pos, self.radius, self.color);
 }
 
-// move to Game.zig
-// if player.top == apple.bottom -> collision
-// if player.bottom == apple.top -> collision
-// if player.left == apple.right -> collision
-// if player.right == apple.left -> collision
-// pub fn detectCollision(self: *Apple, player: Player) bool {}
-
 test "apple init" {
     const sut = init(0, 0);
-    testing.expectEqual(Vector2.init(0, 0), sut.pos);
+    try testing.expectEqual(Vector2.init(0, 0), sut.pos);
 }
