@@ -8,9 +8,6 @@ const Player = @import("Player.zig");
 
 const Game = @This();
 
-const ScreenWidth = 800;
-const ScreenHeight = 450;
-
 player: Player,
 apple: ?Apple = null,
 points: i32 = 0,
@@ -35,6 +32,10 @@ pub fn gameLoop(self: *Game) !void {
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
         // Update
         //----------------------------------------------------------------------------------
+        if (self.apple == null) {
+            log.info("creating new apple", .{});
+            self.apple = Apple.init(self.player.pos.x + 200, self.player.pos.y - 100);
+        }
 
         if (self.detectCollision()) {
             self.points += 1;
@@ -66,8 +67,6 @@ pub fn gameLoop(self: *Game) !void {
         self.player.drawPlayer();
         if (self.apple != null) {
             self.apple.?.drawApple();
-        } else {
-            self.apple = Apple.init(self.player.pos.x + 200, self.player.pos.y - 100);
         }
         //----------------------------------------------------------------------------------
     }
@@ -79,7 +78,7 @@ pub fn detectCollision(self: *Game) bool {
 
     {
         // if player.top == apple.bottom -> collision
-        const appleBottom = apple.center.add(.init(0, -apple.radius));
+        const appleBottom = apple.center.add(.init(0, apple.radius));
         if (appleBottom.y == player.pos.y and (appleBottom.x >= player.pos.x and appleBottom.x <= player.pos.x + player.size.x)) {
             log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, player.pos.y });
             return true;
@@ -88,7 +87,7 @@ pub fn detectCollision(self: *Game) bool {
 
     {
         // if player.bottom == apple.top -> collision
-        const appleTop = apple.center.add(.init(0, apple.radius));
+        const appleTop = apple.center.add(.init(0, -apple.radius));
         if (appleTop.y == (player.pos.y + player.size.y) and (appleTop.x >= player.pos.x and appleTop.x <= player.pos.x + player.size.x)) {
             log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, player.pos.y });
             return true;
@@ -127,36 +126,36 @@ test "collisions" {
     {
         // if player.top == apple.bottom -> collision
         // player -> 200, 200, player.top -> y=200
-        // apple -> 200, 208, apple.bottom -> y=200
-        sut.apple = Apple.init(200, 200 + sut.apple.?.radius);
+        // apple -> 200, 192, apple.bottom -> y=200
+        sut.apple = Apple.init(200, 200 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
 
         // player -> 200, 200, player.top -> y=200
-        // apple -> 232, 208, apple.bottom -> y=200
-        sut.apple = Apple.init(200 + sut.player.size.x, 200 + sut.apple.?.radius);
+        // apple -> 232, 192, apple.bottom -> y=200
+        sut.apple = Apple.init(200 + sut.player.size.x, 200 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
 
         // player -> 200, 200, player.top -> y=200
-        // apple -> 216, 208, apple.bottom -> y=200
-        sut.apple = Apple.init(200 + (sut.player.size.x / 2), 200 + sut.apple.?.radius);
+        // apple -> 216, 192, apple.bottom -> y=200
+        sut.apple = Apple.init(200 + (sut.player.size.x / 2), 200 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
     }
 
     {
         // if player.bottom == apple.top -> collision
         // player -> 200, 200, player.bottom -> y=232
-        // apple -> 200, 224, apple.top -> y=232
-        sut.apple = Apple.init(200, 200 + (sut.player.size.y - sut.apple.?.radius));
+        // apple -> 200, 240, apple.top -> y=232
+        sut.apple = Apple.init(200, 200 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
 
         // player -> 200, 200, player.bottom -> y=232
-        // apple -> 216, 224, apple.top -> y=232
-        sut.apple = Apple.init(200 + sut.player.size.x, 200 + (sut.player.size.y - sut.apple.?.radius));
+        // apple -> 216, 240, apple.top -> y=232
+        sut.apple = Apple.init(200 + sut.player.size.x, 200 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
 
         // player -> 200, 200, player.bottom -> y=232
-        // apple -> 232, 224, apple.top -> y=232
-        sut.apple = Apple.init(200 + (sut.player.size.x / 2), 200 + (sut.player.size.y - sut.apple.?.radius));
+        // apple -> 232, 240, apple.top -> y=232
+        sut.apple = Apple.init(200 + (sut.player.size.x / 2), 200 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
     }
 
