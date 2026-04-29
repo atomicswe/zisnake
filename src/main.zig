@@ -1,11 +1,11 @@
 const std = @import("std");
-const rl = @import("raylib");
 const Game = @import("Game.zig");
-const log = std.log;
 
 pub fn main() anyerror!void {
     var game = Game.init();
     defer game.deinit();
+
+    game.setup();
 
     try game.gameLoop();
 }

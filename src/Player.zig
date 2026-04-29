@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log;
+const log = std.log.scoped(.player);
 const testing = std.testing;
 
 const rl = @import("raylib");

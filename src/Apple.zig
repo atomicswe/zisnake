@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log;
+const log = std.log.scoped(.apple);
 const testing = std.testing;
 
 const rl = @import("raylib");
@@ -13,8 +13,8 @@ radius: f32 = 8,
 color: rl.Color = .white,
 
 pub fn init(x: f32, y: f32) Apple {
-    const pos = Vector2.init(x, y);
-    return .{ .center = pos };
+    const center = Vector2.init(x, y);
+    return .{ .center = center };
 }
 
 pub fn drawApple(self: *Apple) void {
