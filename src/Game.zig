@@ -1,11 +1,13 @@
 const std = @import("std");
-const rl = @import("raylib");
-const log = std.log.scoped(.game);
 const testing = std.testing;
+
+const rl = @import("raylib");
 
 const Apple = @import("Apple.zig");
 const Player = @import("Player.zig");
+const vars = @import("vars.zig");
 
+const log = std.log.scoped(.game);
 const Game = @This();
 
 player: Player,
@@ -13,14 +15,14 @@ apple: ?Apple = null,
 points: i32 = 0,
 
 pub fn init() Game {
-    const p = Player.init(ScreenWidth, ScreenHeight);
+    const p = Player.init(vars.ScreenWidth, vars.ScreenHeight);
     const a = Apple.init(300, 50);
 
     return .{ .player = p, .apple = a };
 }
 
 pub fn setup(_: *Game) void {
-    rl.initWindow(ScreenWidth, ScreenHeight, "zisnake");
+    rl.initWindow(vars.ScreenWidth, vars.ScreenHeight, "zisnake");
     rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
 }
 
