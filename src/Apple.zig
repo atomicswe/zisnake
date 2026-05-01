@@ -16,19 +16,19 @@ color: rl.Color = .white,
 pub fn init(x: f32, y: f32) Apple {
     var center = Vector2.init(x, y);
 
-    if (center.x <= 0) {
+    if (center.x - 8 < 0) {
         center.x = 0 + 8; // + radius
     }
 
-    if (center.x >= vars.ScreenWidth) {
+    if (center.x + 8 > vars.ScreenWidth) {
         center.x = vars.ScreenWidth - 8; // - radius
     }
 
-    if (center.y <= 0) {
+    if (center.y - 8 < 0) {
         center.y = 0 + 8; // + radius
     }
 
-    if (center.y >= vars.ScreenHeight) {
+    if (center.y + 8 > vars.ScreenHeight) {
         center.y = vars.ScreenHeight - 8; // - radius
     }
 
