@@ -1,19 +1,20 @@
 const std = @import("std");
-const log = std.log.scoped(.player);
 const testing = std.testing;
 
 const rl = @import("raylib");
 const Vector2 = rl.Vector2;
 const Color = rl.Color;
 
+const vars = @import("vars.zig");
+
+const log = std.log.scoped(.player);
 const Player = @This();
 
 pos: Vector2,
 size: Vector2 = Vector2.init(32, 32),
 color: Color,
-velocity: Vector2 = Vector2.init(1, 0),
-screenWidth: f32,
-screenHeight: f32,
+velocity: Vector2 = Vector2.init(0, 0),
+safeAreaSize: Vector2 = Vector2.init(100, 50), // area where enemies (apples) can not spawn in around the player
 
 pub const Direction = enum {
     up,
@@ -22,27 +23,33 @@ pub const Direction = enum {
     left,
 };
 
-pub fn init(screenWidth: f32, screenHeight: f32) Player {
-    const pos = Vector2.init(screenWidth / 2, screenHeight / 2);
-    return .{ .pos = pos, .color = .maroon, .screenWidth = screenWidth, .screenHeight = screenHeight };
+pub fn init() Player {
+    const pos = Vector2.init(vars.ScreenWidth / 2, vars.ScreenHeight / 2);
+    return .{ .pos = pos, .color = .maroon };
 }
 
 pub fn drawPlayer(self: *Player) void {
     self.pos = Vector2.add(self.pos, self.velocity);
 
-    if (self.pos.x > self.screenWidth and self.velocity.equals(Vector2.init(1, 0))) {
+    if (self.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
         self.pos.x = 0;
     } else if (self.pos.x < 0 - self.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
-        self.pos.x = self.screenWidth;
+        self.pos.x = vars.ScreenWidth;
     }
 
-    if (self.pos.y > self.screenHeight and self.velocity.equals(Vector2.init(0, 1))) {
+    if (self.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
         self.pos.y = 0;
     } else if (self.pos.y < 0 - self.size.y and self.velocity.equals(Vector2.init(0, -1))) {
-        self.pos.y = self.screenHeight;
+        self.pos.y = vars.ScreenHeight;
     }
 
     rl.drawRectangleV(self.pos, self.size, self.color);
+    self.drawSafeArea();
+}
+
+fn drawSafeArea(self: *Player) void {
+    const safeArea = self.getSafeAreaLimits()[0];
+    rl.drawRectangleLines(@intFromFloat(safeArea.x), @intFromFloat(safeArea.y), @intFromFloat(self.safeAreaSize.x), @intFromFloat(self.safeAreaSize.y), .green);
 }
 
 pub fn switchDirection(self: *Player, direction: Direction) void {
@@ -67,17 +74,28 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
     }
 }
 
-test "player init" {
-    const sut = init(100, 100);
+// TODO: add tests
+pub fn getSafeAreaLimits(self: *Player) [2]Vector2 {
+    const x1: f32 = @max(0, (self.pos.x + self.size.x / 2) - (self.safeAreaSize.x / 2));
+    const y1: f32 = @max(0, (self.pos.y + self.size.y / 2) - (self.safeAreaSize.y / 2));
 
-    try testing.expectEqual(Vector2.init(50, 50), sut.pos);
+    const x2: f32 = @min(vars.ScreenWidth, (self.pos.x + self.size.x / 2) + (self.safeAreaSize.x / 2));
+    const y2: f32 = @min(vars.ScreenHeight, (self.pos.y + self.size.y / 2) + (self.safeAreaSize.y / 2));
+
+    return [2]Vector2{
+        .init(x1, y1),
+        .init(x2, y2),
+    };
+}
+
+test "player init" {
+    _ = init();
 }
 
 test "switch direction success" {
-    var sut = init(100, 100);
+    var sut = init();
 
-    try testing.expectEqual(Vector2.init(50, 50), sut.pos);
-    try testing.expectEqual(Vector2.init(1, 0), sut.velocity);
+    try testing.expectEqual(Vector2.init(0, 0), sut.velocity);
 
     sut.switchDirection(.up);
     try testing.expectEqual(Vector2.init(0, -1), sut.velocity);
