@@ -38,7 +38,7 @@ pub fn gameLoop(self: *Game) !void {
         //----------------------------------------------------------------------------------
         if (self.apple == null) {
             log.info("creating new apple", .{});
-            self.apple = Apple.init(self.player.pos.x + 200, self.player.pos.y - 100);
+            self.apple = self.spawnApple();
         }
 
         if (self.detectCollision()) {
@@ -76,7 +76,41 @@ pub fn gameLoop(self: *Game) !void {
     }
 }
 
-pub fn detectCollision(self: *Game) bool {
+fn distance(p1: rl.Vector2, p2: rl.Vector2) f32 {
+    const hor = p2.x - p1.x;
+    const ver = p2.y - p1.y;
+    const squareSum = math.exp2(hor) + math.exp2(ver);
+    return math.sqrt(squareSum);
+}
+
+fn spawnApple(self: *Game) Apple {
+    const safeAreaLimits = self.player.getSafeAreaLimits();
+
+    var xMin: i32 = 0;
+    var xMax: i32 = vars.ScreenWidth;
+    var yMin: i32 = 0;
+    var yMax: i32 = vars.ScreenHeight;
+
+    if (distance(rl.Vector2.init(0, safeAreaLimits[0].y), safeAreaLimits[0]) > distance(safeAreaLimits[1], rl.Vector2.init(vars.ScreenWidth, safeAreaLimits[1].y))) {
+        xMax = @intFromFloat(safeAreaLimits[0].x);
+    } else {
+        xMin = @intFromFloat(safeAreaLimits[1].x);
+    }
+
+    if (distance(rl.Vector2.init(safeAreaLimits[0].x, 0), safeAreaLimits[0]) > distance(safeAreaLimits[1], rl.Vector2.init(safeAreaLimits[1].x, vars.ScreenHeight))) {
+        yMax = @intFromFloat(safeAreaLimits[0].y);
+    } else {
+        yMin = @intFromFloat(safeAreaLimits[1].y);
+    }
+
+    const x: f32 = @floatFromInt(self.rand.intRangeAtMost(i32, xMin, xMax));
+    const y: f32 = @floatFromInt(self.rand.intRangeAtMost(i32, yMin, yMax));
+
+    log.info("spawning apple at x: {d:.2}, y: {d:.2}", .{ x, y });
+    return Apple.init(x, y);
+}
+
+fn detectCollision(self: *Game) bool {
     const player: Player = self.player;
     const apple: Apple = self.apple orelse return false;
 

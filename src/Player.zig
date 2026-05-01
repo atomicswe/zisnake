@@ -14,7 +14,7 @@ pos: Vector2,
 size: Vector2 = Vector2.init(32, 32),
 color: Color,
 velocity: Vector2 = Vector2.init(0, 0),
-safeAreaSize: Vector2 = Vector2.init(100, 50), // area where enemies (apples) can not spawn in around the player
+safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
 
 pub const Direction = enum {
     up,
