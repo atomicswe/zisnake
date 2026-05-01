@@ -76,7 +76,6 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
     }
 }
 
-// TODO: add tests
 pub fn getSafeAreaLimits(self: *Player) [2]Vector2 {
     const x1: f32 = @max(0, (self.pos.x + self.size.x / 2) - (self.safeAreaSize.x / 2));
     const y1: f32 = @max(0, (self.pos.y + self.size.y / 2) - (self.safeAreaSize.y / 2));
@@ -104,4 +103,49 @@ test "switch direction success" {
 
     sut.switchDirection(.left);
     try testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
+}
+
+test "get safe area limits" {
+    var sut = init();
+
+    try testing.expectEqual(Vector2.init(384, 184), sut.pos);
+    try testing.expectEqual(Vector2.init(150, 100), sut.safeAreaSize);
+
+    {
+        const safeArea = sut.getSafeAreaLimits();
+        try testing.expect(safeArea.len == 2);
+
+        try testing.expectEqual(Vector2.init(325, 150), safeArea[0]);
+        try testing.expectEqual(Vector2.init(475, 250), safeArea[1]);
+    }
+
+    {
+        sut.pos = .init(0, 0);
+
+        const safeArea = sut.getSafeAreaLimits();
+        try testing.expect(safeArea.len == 2);
+
+        try testing.expectEqual(Vector2.init(0, 0), safeArea[0]);
+        try testing.expectEqual(Vector2.init(91, 66), safeArea[1]);
+    }
+
+    {
+        sut.pos = .init(vars.ScreenWidth, vars.ScreenHeight);
+
+        const safeArea = sut.getSafeAreaLimits();
+        try testing.expect(safeArea.len == 2);
+
+        try testing.expectEqual(Vector2.init(741, 366), safeArea[0]);
+        try testing.expectEqual(Vector2.init(vars.ScreenWidth, vars.ScreenHeight), safeArea[1]);
+    }
+
+    {
+        sut.pos = .init(37, 276);
+
+        const safeArea = sut.getSafeAreaLimits();
+        try testing.expect(safeArea.len == 2);
+
+        try testing.expectEqual(Vector2.init(0, 242), safeArea[0]);
+        try testing.expectEqual(Vector2.init(128, 342), safeArea[1]);
+    }
 }
