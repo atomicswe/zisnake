@@ -25,11 +25,11 @@ pub fn init(rand: Random) Game {
 
 pub fn setup(_: *Game) void {
     rl.initWindow(vars.ScreenWidth, vars.ScreenHeight, "zisnake");
-    rl.setTargetFPS(60); // Set our game to run at 60 frames-per-second
+    rl.setTargetFPS(60);
 }
 
 pub fn deinit(_: *Game) void {
-    rl.closeWindow(); // Close window and OpenGL context
+    rl.closeWindow();
 }
 
 pub fn gameLoop(self: *Game) !void {
