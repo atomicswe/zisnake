@@ -83,6 +83,12 @@ fn distance(p1: rl.Vector2, p2: rl.Vector2) f32 {
     return math.sqrt(squareSum);
 }
 
+/// Spawns an apple randomly on the screen, outside the player's safe area.
+/// If the player is centered, on both horizontal and vertical, or in just one,
+/// we randomly choose between one of the options in each axis.
+///
+/// I.e.: If the player is centered horizontally, we randomly choose whether to put
+/// the apple on the right or on the left side of the screen.
 fn spawnApple(self: *Game) Apple {
     const safeAreaLimits = self.player.getSafeAreaLimits();
 
@@ -91,13 +97,25 @@ fn spawnApple(self: *Game) Apple {
     var yMin: i32 = 0;
     var yMax: i32 = vars.ScreenHeight;
 
-    if (distance(rl.Vector2.init(0, safeAreaLimits[0].y), safeAreaLimits[0]) > distance(safeAreaLimits[1], rl.Vector2.init(vars.ScreenWidth, safeAreaLimits[1].y))) {
+    const left = distance(rl.Vector2.init(0, safeAreaLimits[0].y), safeAreaLimits[0]);
+    const right = distance(safeAreaLimits[1], rl.Vector2.init(vars.ScreenWidth, safeAreaLimits[1].y));
+    if (left == right) {
+        const p = self.rand.float(f32);
+        xMin = if (p >= 0.5) @intFromFloat(safeAreaLimits[1].x) else xMin;
+        xMax = if (p < 0.5) @intFromFloat(safeAreaLimits[0].x) else xMax;
+    } else if (left > right) {
         xMax = @intFromFloat(safeAreaLimits[0].x);
     } else {
         xMin = @intFromFloat(safeAreaLimits[1].x);
     }
 
-    if (distance(rl.Vector2.init(safeAreaLimits[0].x, 0), safeAreaLimits[0]) > distance(safeAreaLimits[1], rl.Vector2.init(safeAreaLimits[1].x, vars.ScreenHeight))) {
+    const top = distance(rl.Vector2.init(safeAreaLimits[0].x, 0), safeAreaLimits[0]);
+    const bottom = distance(safeAreaLimits[1], rl.Vector2.init(safeAreaLimits[1].x, vars.ScreenHeight));
+    if (top == bottom) {
+        const p = self.rand.float(f32);
+        yMin = if (p >= 0.5) @intFromFloat(safeAreaLimits[1].y) else yMin;
+        yMax = if (p < 0.5) @intFromFloat(safeAreaLimits[0].y) else yMax;
+    } else if (top > bottom) {
         yMax = @intFromFloat(safeAreaLimits[0].y);
     } else {
         yMin = @intFromFloat(safeAreaLimits[1].y);
