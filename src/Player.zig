@@ -10,8 +10,10 @@ const vars = @import("vars.zig");
 const log = std.log.scoped(.player);
 const Player = @This();
 
+const PlayerSize: f32 = 32;
+
 pos: Vector2,
-size: Vector2 = Vector2.init(32, 32),
+size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
 color: Color,
 velocity: Vector2 = Vector2.init(0, 0),
 safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
@@ -24,7 +26,7 @@ pub const Direction = enum {
 };
 
 pub fn init() Player {
-    const pos = Vector2.init(vars.ScreenWidth / 2, vars.ScreenHeight / 2);
+    const pos = Vector2.init((vars.ScreenWidth / 2 - PlayerSize / 2), (vars.ScreenHeight / 2) - (PlayerSize / 2));
     return .{ .pos = pos, .color = .maroon };
 }
 

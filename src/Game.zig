@@ -161,80 +161,80 @@ test "collisions" {
     try testing.expectEqual(0, sut.points);
 
     sut.player = Player.init(); // player is at ScreenWidth/2, ScreenHeight/2 so, 200, 200
-    try testing.expectEqual(400, sut.player.pos.x);
-    try testing.expectEqual(200, sut.player.pos.y);
+    try testing.expectEqual(384, sut.player.pos.x);
+    try testing.expectEqual(184, sut.player.pos.y);
 
     sut.apple = Apple.init(0, 0);
 
     {
         // if player.top == apple.bottom -> collision
-        // player -> 400, 200, player.top -> y=200
-        // apple -> 400, 192, apple.bottom -> y=200
-        sut.apple = Apple.init(400, 200 - sut.apple.?.radius);
+        // player -> 384, 184, player.top -> y=184
+        // apple -> 384, 176, apple.bottom -> y=184
+        sut.apple = Apple.init(384, 184 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.top -> y=200
-        // apple -> 432, 192, apple.bottom -> y=200
-        sut.apple = Apple.init(400 + sut.player.size.x, 200 - sut.apple.?.radius);
+        // player -> 384, 184, player.top -> y=184
+        // apple -> 416, 176, apple.bottom -> y=184
+        sut.apple = Apple.init(384 + sut.player.size.x, 184 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.top -> y=200
-        // apple -> 416, 192, apple.bottom -> y=200
-        sut.apple = Apple.init(400 + (sut.player.size.x / 2), 200 - sut.apple.?.radius);
+        // player -> 384, 184, player.top -> y=184
+        // apple -> 400, 176, apple.bottom -> y=184
+        sut.apple = Apple.init(384 + (sut.player.size.x / 2), 184 - sut.apple.?.radius);
         try testing.expectEqual(true, sut.detectCollision());
     }
 
     {
         // if player.bottom == apple.top -> collision
-        // player -> 400, 200, player.bottom -> y=232
-        // apple -> 400, 240, apple.top -> y=232
-        sut.apple = Apple.init(400, 200 + (sut.player.size.y + sut.apple.?.radius));
+        // player -> 384, 184, player.bottom -> y=216
+        // apple -> 384, 224, apple.top -> y=216
+        sut.apple = Apple.init(384, 184 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.bottom -> y=232
-        // apple -> 416, 240, apple.top -> y=232
-        sut.apple = Apple.init(400 + sut.player.size.x, 200 + (sut.player.size.y + sut.apple.?.radius));
+        // player -> 384, 184, player.bottom -> y=216
+        // apple -> 416, 224, apple.top -> y=216
+        sut.apple = Apple.init(384 + sut.player.size.x, 184 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.bottom -> y=232
-        // apple -> 432, 240, apple.top -> y=232
-        sut.apple = Apple.init(400 + (sut.player.size.x / 2), 200 + (sut.player.size.y + sut.apple.?.radius));
+        // player -> 384, 184, player.bottom -> y=216
+        // apple -> 400, 224, apple.top -> y=216
+        sut.apple = Apple.init(384 + (sut.player.size.x / 2), 184 + (sut.player.size.y + sut.apple.?.radius));
         try testing.expectEqual(true, sut.detectCollision());
     }
 
     {
         // if player.left == apple.right -> collision
-        // player -> 400, 200, player.left -> x=200
-        // apple -> 392, 200, apple.right -> x=200
-        sut.apple = Apple.init(400 - sut.apple.?.radius, 200);
+        // player -> 384, 184, player.left -> x=384
+        // apple -> 376, 184, apple.right -> x=384
+        sut.apple = Apple.init(384 - sut.apple.?.radius, 184);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.left -> x=200
-        // apple -> 392, 232, apple.right -> x=200
-        sut.apple = Apple.init(400 - sut.apple.?.radius, 200 + sut.player.size.y);
+        // player -> 384, 184, player.left -> x=384
+        // apple -> 376, 216, apple.right -> x=384
+        sut.apple = Apple.init(384 - sut.apple.?.radius, 184 + sut.player.size.y);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.left -> x=200
-        // apple -> 392, 216, apple.right -> x=200
-        sut.apple = Apple.init(400 - sut.apple.?.radius, 200 + (sut.player.size.y / 2));
+        // player -> 384, 184, player.left -> x=384
+        // apple -> 376, 200, apple.right -> x=384
+        sut.apple = Apple.init(384 - sut.apple.?.radius, 184 + (sut.player.size.y / 2));
         try testing.expectEqual(true, sut.detectCollision());
     }
 
     {
         // if player.right == apple.left -> collision
-        // player -> 400, 200, player.right -> x=232
-        // apple -> 440, 200, apple.left -> x=232
-        sut.apple = Apple.init(400 + (sut.player.size.x + sut.apple.?.radius), 200);
+        // player -> 384, 184, player.right -> x=416
+        // apple -> 424, 184, apple.left -> x=416
+        sut.apple = Apple.init(384 + (sut.player.size.x + sut.apple.?.radius), 184);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.right -> x=232
-        // apple -> 440, 232, apple.left -> x=232
-        sut.apple = Apple.init(400 + (sut.player.size.x + sut.apple.?.radius), 200 + sut.player.size.y);
+        // player -> 384, 184, player.right -> x=416
+        // apple -> 424, 216, apple.left -> x=416
+        sut.apple = Apple.init(384 + (sut.player.size.x + sut.apple.?.radius), 184 + sut.player.size.y);
         try testing.expectEqual(true, sut.detectCollision());
 
-        // player -> 400, 200, player.right -> x=232
-        // apple -> 440, 216, apple.left -> x=232
-        sut.apple = Apple.init(400 + (sut.player.size.x + sut.apple.?.radius), 200 + (sut.player.size.y / 2));
+        // player -> 384, 184, player.right -> x=216
+        // apple -> 424, 200, apple.left -> x=216
+        sut.apple = Apple.init(384 + (sut.player.size.x + sut.apple.?.radius), 184 + (sut.player.size.y / 2));
         try testing.expectEqual(true, sut.detectCollision());
     }
 }
