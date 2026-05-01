@@ -47,18 +47,7 @@ pub fn gameLoop(self: *Game) !void {
             std.log.info("player received +1 points. Current points: {d}", .{self.points});
         }
 
-        if (rl.isKeyPressed(.up)) {
-            self.player.switchDirection(.up);
-        }
-        if (rl.isKeyPressed(.down)) {
-            self.player.switchDirection(.down);
-        }
-        if (rl.isKeyPressed(.right)) {
-            self.player.switchDirection(.right);
-        }
-        if (rl.isKeyPressed(.left)) {
-            self.player.switchDirection(.left);
-        }
+        self.handleKeyPressed();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -73,6 +62,16 @@ pub fn gameLoop(self: *Game) !void {
             self.apple.?.drawApple();
         }
         //----------------------------------------------------------------------------------
+    }
+}
+
+fn handleKeyPressed(self: *Game) void {
+    switch (rl.getKeyPressed()) {
+        .up => self.player.switchDirection(.up),
+        .down => self.player.switchDirection(.down),
+        .left => self.player.switchDirection(.left),
+        .right => self.player.switchDirection(.right),
+        else => return,
     }
 }
 
