@@ -16,4 +16,5 @@ test {
     std.testing.refAllDecls(@import("Game.zig"));
     std.testing.refAllDecls(@import("Player.zig"));
     std.testing.refAllDecls(@import("Apple.zig"));
+    std.testing.refAllDecls(@import("Part.zig"));
 }

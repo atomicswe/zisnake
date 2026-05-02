@@ -3,6 +3,7 @@ const testing = std.testing;
 const ArrayList = std.ArrayList;
 const Deque = std.Deque;
 const Allocator = std.mem.Allocator;
+const Part = @import("Part.zig");
 
 const rl = @import("raylib");
 const Vector2 = rl.Vector2;
@@ -20,61 +21,6 @@ pub const Direction = enum {
     left,
 };
 
-// TODO: move to its own file
-pub const Part = struct {
-    pub const Memory = struct {
-        turnPoint: Vector2,
-        oldVelocity: Vector2,
-        newVelocity: Vector2,
-    };
-
-    pos: Vector2,
-    isHead: bool = false,
-    velocity: Vector2 = Vector2.init(0, 0),
-    memories: Deque(Memory) = .empty,
-
-    fn deinit(self: *Part, allocator: Allocator) void {
-        self.memories.deinit(allocator);
-    }
-
-    // TODO: add tests
-    fn movePart(self: *Part, player: Player) void {
-        if (self.memories.front()) |memory| {
-            const oldV = memory.oldVelocity;
-
-            const hor = oldV.equals(.init(1, 0)) or oldV.equals(.init(-1, 0));
-            const ver = oldV.equals(.init(0, 1)) or oldV.equals(.init(0, -1));
-
-            const reachedTurnPoint =
-                (hor and self.pos.x == memory.turnPoint.x) or
-                (ver and self.pos.y == memory.turnPoint.y);
-
-            if (reachedTurnPoint) {
-                self.pos = memory.turnPoint;
-                self.velocity = memory.newVelocity;
-                _ = self.memories.popFront();
-            } else {
-                self.pos = self.pos.add(oldV);
-                return;
-            }
-        }
-
-        self.pos = self.pos.add(self.velocity);
-
-        if (self.pos.x > vars.ScreenWidth and self.velocity.equals(.init(1, 0))) {
-            self.pos.x = 0;
-        } else if (self.pos.x < 0 - player.size.x and self.velocity.equals(.init(-1, 0))) {
-            self.pos.x = vars.ScreenWidth;
-        }
-
-        if (self.pos.y > vars.ScreenHeight and self.velocity.equals(.init(0, 1))) {
-            self.pos.y = 0;
-        } else if (self.pos.y < 0 - player.size.y and self.velocity.equals(.init(0, -1))) {
-            self.pos.y = vars.ScreenHeight;
-        }
-    }
-};
-
 const PlayerSize: f32 = 32;
 
 body: ArrayList(Part),
@@ -87,7 +33,7 @@ pub fn init(allocator: Allocator) !Player {
     var body: ArrayList(Part) = .empty;
 
     const pos = Vector2.init((vars.ScreenWidth / 2 - PlayerSize / 2), (vars.ScreenHeight / 2) - (PlayerSize / 2));
-    const head = Part{ .pos = pos, .isHead = true };
+    const head = Part{ .pos = pos, .isHead = true, .memories = .empty };
     try body.append(allocator, head);
 
     return .{ .body = body, .color = .maroon, .allocator = allocator };
@@ -102,7 +48,7 @@ pub fn deinit(self: *Player) void {
 
 pub fn drawPlayer(self: *Player) void {
     for (self.body.items) |*part| {
-        part.movePart(self.*);
+        part.movePart(self.*.size);
 
         rl.drawRectangleV(part.pos, self.size, self.color);
         if (part.isHead) self.drawSafeArea();
@@ -200,7 +146,7 @@ test "switch direction" {
 
     try testing.expectEqual(Vector2.init(0, 0), sut.body.items[0].velocity);
 
-    try sut.body.append(allocator, Part{ .pos = .init(0, 0) });
+    try sut.body.append(allocator, Part.init(.init(0, 0), .init(0, 0), .empty));
 
     try sut.switchDirection(.up);
     try testing.expectEqual(Vector2.init(0, -1), sut.body.items[0].velocity);
