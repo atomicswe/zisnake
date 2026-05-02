@@ -63,8 +63,16 @@ pub fn gameLoop(self: *Game) !void {
         if (self.apple != null) {
             self.apple.?.drawApple();
         }
+
+        try self.drawUI();
         //----------------------------------------------------------------------------------
     }
+}
+
+fn drawUI(self: *Game) !void {
+    var pointsTextBuf: [256]u8 = undefined;
+    const pointsText = try std.fmt.bufPrintSentinel(&pointsTextBuf, "Points: {d}", .{self.points}, 0);
+    rl.drawText(pointsText, 12, 12, 32, .white);
 }
 
 fn handleKeyPressed(self: *Game) !void {
