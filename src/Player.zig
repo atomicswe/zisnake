@@ -122,8 +122,22 @@ pub fn addPartToBody(self: *Player) !void {
     const v = invV.multiply(self.size);
     const newPos = last.pos.add(v);
 
-    const newPart = Part{ .pos = newPos, .velocity = last.velocity };
+    var clonedMemories = try copyMemories(self.allocator, &last.memories);
+    errdefer clonedMemories.deinit(self.allocator);
+
+    const newPart = Part{ .pos = newPos, .velocity = last.velocity, .memories = clonedMemories };
     try self.body.append(self.allocator, newPart);
+}
+
+fn copyMemories(allocator: Allocator, memories: *const Deque(Part.Memory)) !Deque(Part.Memory) {
+    var clone: Deque(Part.Memory) = .empty;
+
+    var it = memories.iterator();
+    while (it.next()) |memory| {
+        try clone.pushBack(allocator, memory);
+    }
+
+    return clone;
 }
 
 pub fn switchDirection(self: *Player, direction: Direction) !void {
