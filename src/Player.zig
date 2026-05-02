@@ -130,6 +130,30 @@ pub fn getSafeAreaLimits(self: *Player) [2]Vector2 {
     };
 }
 
+pub fn detectHeadCollision(self: *Player) bool {
+    const head = self.body.items[0];
+    if (!head.isHead) @panic("head is not head");
+
+    if (self.body.items.len <= 1) return false;
+
+    const headMin = head.pos;
+    const headMax = head.pos.add(self.size);
+
+    for (self.body.items[1..]) |*part| {
+        const vertices = part.getVertices(self.size);
+
+        for (vertices) |vertice| {
+            const hor = vertice.x > headMin.x and vertice.x < headMax.x;
+            const ver = vertice.y > headMin.y and vertice.y < headMax.y;
+            if (hor and ver) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 test "player init" {
     const allocator = std.testing.allocator;
     var sut = try init(allocator);

@@ -66,6 +66,16 @@ pub fn movePart(self: *Part, playerSize: Vector2) void {
     }
 }
 
+// TODO: add tests
+pub fn getVertices(self: *Part, size: Vector2) [4]Vector2 {
+    return [4]Vector2{
+        self.pos,
+        .init(self.pos.x + size.x, self.pos.y),
+        .init(self.pos.x, self.pos.y + size.y),
+        .init(self.pos.x + size.x, self.pos.y + size.y),
+    };
+}
+
 test "move part" {
     const allocator = std.testing.allocator;
 

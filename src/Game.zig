@@ -49,6 +49,11 @@ pub fn gameLoop(self: *Game) !void {
             try self.player.addPartToBody();
         }
 
+        if (self.player.detectHeadCollision()) {
+            log.info("collision detected between head and body part", .{});
+            log.info("GAME OVER", .{});
+        }
+
         try self.handleKeyPressed();
         //----------------------------------------------------------------------------------
 
