@@ -19,14 +19,14 @@ pub const Direction = enum {
     left,
 };
 
-pub const Body = struct {
+pub const Parts = struct {
     pos: Vector2,
     isHead: bool = false,
 };
 
 const PlayerSize: f32 = 32;
 
-body: ArrayList(Body),
+body: ArrayList(Parts),
 size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
 color: Color,
 velocity: Vector2 = Vector2.init(0, 0),
@@ -34,10 +34,10 @@ safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) c
 allocator: Allocator,
 
 pub fn init(allocator: Allocator) !Player {
-    var body: ArrayList(Body) = .empty;
+    var body: ArrayList(Parts) = .empty;
 
     const pos = Vector2.init((vars.ScreenWidth / 2 - PlayerSize / 2), (vars.ScreenHeight / 2) - (PlayerSize / 2));
-    const head = Body{ .pos = pos, .isHead = true };
+    const head = Parts{ .pos = pos, .isHead = true };
     try body.append(allocator, head);
 
     return .{ .body = body, .color = .maroon, .allocator = allocator };
