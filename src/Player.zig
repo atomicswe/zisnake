@@ -1,5 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
+const ArrayList = std.ArrayList;
+const Allocator = std.mem.Allocator;
 
 const rl = @import("raylib");
 const Vector2 = rl.Vector2;
@@ -10,14 +12,6 @@ const vars = @import("vars.zig");
 const log = std.log.scoped(.player);
 const Player = @This();
 
-const PlayerSize: f32 = 32;
-
-pos: Vector2,
-size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
-color: Color,
-velocity: Vector2 = Vector2.init(0, 0),
-safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
-
 pub const Direction = enum {
     up,
     down,
@@ -25,28 +19,53 @@ pub const Direction = enum {
     left,
 };
 
-pub fn init() Player {
+pub const Body = struct {
+    pos: Vector2,
+    isHead: bool = false,
+};
+
+const PlayerSize: f32 = 32;
+
+body: ArrayList(Body),
+size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
+color: Color,
+velocity: Vector2 = Vector2.init(0, 0),
+safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
+allocator: Allocator,
+
+pub fn init(allocator: Allocator) !Player {
+    var body: ArrayList(Body) = .empty;
+
     const pos = Vector2.init((vars.ScreenWidth / 2 - PlayerSize / 2), (vars.ScreenHeight / 2) - (PlayerSize / 2));
-    return .{ .pos = pos, .color = .maroon };
+    const head = Body{ .pos = pos, .isHead = true };
+    try body.append(allocator, head);
+
+    return .{ .body = body, .color = .maroon, .allocator = allocator };
+}
+
+pub fn deinit(self: *Player) void {
+    self.body.deinit(self.allocator);
 }
 
 pub fn drawPlayer(self: *Player) void {
-    self.pos = Vector2.add(self.pos, self.velocity);
+    for (self.body.items) |*part| {
+        part.pos = Vector2.add(part.pos, self.velocity);
 
-    if (self.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
-        self.pos.x = 0;
-    } else if (self.pos.x < 0 - self.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
-        self.pos.x = vars.ScreenWidth;
+        if (part.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
+            part.pos.x = 0;
+        } else if (part.pos.x < 0 - self.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
+            part.pos.x = vars.ScreenWidth;
+        }
+
+        if (part.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
+            part.pos.y = 0;
+        } else if (part.pos.y < 0 - self.size.y and self.velocity.equals(Vector2.init(0, -1))) {
+            part.pos.y = vars.ScreenHeight;
+        }
+
+        rl.drawRectangleV(part.pos, self.size, self.color);
+        if (part.isHead) self.drawSafeArea();
     }
-
-    if (self.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
-        self.pos.y = 0;
-    } else if (self.pos.y < 0 - self.size.y and self.velocity.equals(Vector2.init(0, -1))) {
-        self.pos.y = vars.ScreenHeight;
-    }
-
-    rl.drawRectangleV(self.pos, self.size, self.color);
-    self.drawSafeArea();
 }
 
 fn drawSafeArea(self: *Player) void {
@@ -77,11 +96,14 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
 }
 
 pub fn getSafeAreaLimits(self: *Player) [2]Vector2 {
-    const x1: f32 = @max(0, (self.pos.x + self.size.x / 2) - (self.safeAreaSize.x / 2));
-    const y1: f32 = @max(0, (self.pos.y + self.size.y / 2) - (self.safeAreaSize.y / 2));
+    const head = self.body.items[0];
+    if (!head.isHead) @panic("player head is not present or in the wrong place");
 
-    const x2: f32 = @min(vars.ScreenWidth, (self.pos.x + self.size.x / 2) + (self.safeAreaSize.x / 2));
-    const y2: f32 = @min(vars.ScreenHeight, (self.pos.y + self.size.y / 2) + (self.safeAreaSize.y / 2));
+    const x1: f32 = @max(0, (head.pos.x + self.size.x / 2) - (self.safeAreaSize.x / 2));
+    const y1: f32 = @max(0, (head.pos.y + self.size.y / 2) - (self.safeAreaSize.y / 2));
+
+    const x2: f32 = @min(vars.ScreenWidth, (head.pos.x + self.size.x / 2) + (self.safeAreaSize.x / 2));
+    const y2: f32 = @min(vars.ScreenHeight, (head.pos.y + self.size.y / 2) + (self.safeAreaSize.y / 2));
 
     return [2]Vector2{
         .init(x1, y1),
@@ -90,11 +112,18 @@ pub fn getSafeAreaLimits(self: *Player) [2]Vector2 {
 }
 
 test "player init" {
-    _ = init();
+    const allocator = std.testing.allocator;
+    var sut = try init(allocator);
+    defer sut.deinit();
+
+    try testing.expect(sut.body.items.len == 1);
+    try testing.expect(sut.body.items[0].isHead == true);
 }
 
 test "switch direction success" {
-    var sut = init();
+    const allocator = std.testing.allocator;
+    var sut = try init(allocator);
+    defer sut.deinit();
 
     try testing.expectEqual(Vector2.init(0, 0), sut.velocity);
 
@@ -106,9 +135,15 @@ test "switch direction success" {
 }
 
 test "get safe area limits" {
-    var sut = init();
+    const allocator = std.testing.allocator;
+    var sut = try init(allocator);
+    defer sut.deinit();
 
-    try testing.expectEqual(Vector2.init(384, 184), sut.pos);
+    try testing.expect(sut.body.items.len == 1);
+    try testing.expect(sut.body.items[0].isHead == true);
+
+    var head = sut.body.items[0];
+    try testing.expectEqual(Vector2.init(384, 184), head.pos);
     try testing.expectEqual(Vector2.init(150, 100), sut.safeAreaSize);
 
     {
@@ -120,7 +155,8 @@ test "get safe area limits" {
     }
 
     {
-        sut.pos = .init(0, 0);
+        sut.body.items[0].pos = .init(0, 0);
+        head = sut.body.items[0];
 
         const safeArea = sut.getSafeAreaLimits();
         try testing.expect(safeArea.len == 2);
@@ -130,7 +166,8 @@ test "get safe area limits" {
     }
 
     {
-        sut.pos = .init(vars.ScreenWidth, vars.ScreenHeight);
+        sut.body.items[0].pos = .init(vars.ScreenWidth, vars.ScreenHeight);
+        head = sut.body.items[0];
 
         const safeArea = sut.getSafeAreaLimits();
         try testing.expect(safeArea.len == 2);
@@ -140,7 +177,8 @@ test "get safe area limits" {
     }
 
     {
-        sut.pos = .init(37, 276);
+        sut.body.items[0].pos = .init(37, 276);
+        head = sut.body.items[0];
 
         const safeArea = sut.getSafeAreaLimits();
         try testing.expect(safeArea.len == 2);

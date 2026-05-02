@@ -4,7 +4,7 @@ const Game = @import("Game.zig");
 pub fn main(init: std.process.Init) anyerror!void {
     var source: std.Random.IoSource = .{ .io = init.io };
 
-    var game = Game.init(source.interface());
+    var game = try Game.init(source.interface(), init.gpa);
     defer game.deinit();
 
     game.setup();

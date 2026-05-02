@@ -17,8 +17,8 @@ apple: ?Apple = null,
 points: i32 = 0,
 rand: Random,
 
-pub fn init(rand: Random) Game {
-    const p = Player.init();
+pub fn init(rand: Random, allocator: std.mem.Allocator) !Game {
+    const p = try Player.init(allocator);
 
     return .{ .player = p, .rand = rand };
 }
@@ -28,7 +28,8 @@ pub fn setup(_: *Game) void {
     rl.setTargetFPS(60);
 }
 
-pub fn deinit(_: *Game) void {
+pub fn deinit(self: *Game) void {
+    self.player.deinit();
     rl.closeWindow();
 }
 
@@ -134,8 +135,8 @@ fn detectCollision(self: *Game) bool {
     {
         // if player.top == apple.bottom -> collision
         const appleBottom = apple.center.add(.init(0, apple.radius));
-        if (appleBottom.y == player.pos.y and (appleBottom.x >= player.pos.x and appleBottom.x <= player.pos.x + player.size.x)) {
-            log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, player.pos.y });
+        if (appleBottom.y == player.body.items[0].pos.y and (appleBottom.x >= player.body.items[0].pos.x and appleBottom.x <= player.body.items[0].pos.x + player.size.x)) {
+            log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, player.body.items[0].pos.y });
             return true;
         }
     }
@@ -143,8 +144,8 @@ fn detectCollision(self: *Game) bool {
     {
         // if player.bottom == apple.top -> collision
         const appleTop = apple.center.add(.init(0, -apple.radius));
-        if (appleTop.y == (player.pos.y + player.size.y) and (appleTop.x >= player.pos.x and appleTop.x <= player.pos.x + player.size.x)) {
-            log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, player.pos.y });
+        if (appleTop.y == (player.body.items[0].pos.y + player.size.y) and (appleTop.x >= player.body.items[0].pos.x and appleTop.x <= player.body.items[0].pos.x + player.size.x)) {
+            log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, player.body.items[0].pos.y });
             return true;
         }
     }
@@ -152,8 +153,8 @@ fn detectCollision(self: *Game) bool {
     {
         // if player.left == apple.right -> collision
         const appleRight = apple.center.add(.init(apple.radius, 0));
-        if (appleRight.x == player.pos.x and (appleRight.y >= player.pos.y and appleRight.y <= player.pos.y + player.size.y)) {
-            log.info("collision (player.left == apple.right) detected at x: {d}, y: {d}", .{ player.pos.x, appleRight.y });
+        if (appleRight.x == player.body.items[0].pos.x and (appleRight.y >= player.body.items[0].pos.y and appleRight.y <= player.body.items[0].pos.y + player.size.y)) {
+            log.info("collision (player.left == apple.right) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleRight.y });
             return true;
         }
     }
@@ -161,8 +162,8 @@ fn detectCollision(self: *Game) bool {
     {
         // if player.right == apple.left -> collision
         const appleLeft = apple.center.add(.init(-apple.radius, 0));
-        if (appleLeft.x == (player.pos.x + player.size.x) and (appleLeft.y >= player.pos.y and appleLeft.y <= player.pos.y + player.size.y)) {
-            log.info("collision (player.right == apple.left) detected at x: {d}, y: {d}", .{ player.pos.x, appleLeft.y });
+        if (appleLeft.x == (player.body.items[0].pos.x + player.size.x) and (appleLeft.y >= player.body.items[0].pos.y and appleLeft.y <= player.body.items[0].pos.y + player.size.y)) {
+            log.info("collision (player.right == apple.left) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleLeft.y });
             return true;
         }
     }
@@ -171,15 +172,16 @@ fn detectCollision(self: *Game) bool {
 }
 
 test "collisions" {
+    const allocator = std.testing.allocator;
     const io = std.testing.io;
     const rng_impl: std.Random.IoSource = .{ .io = io };
 
-    var sut = Game.init(rng_impl.interface());
-    try testing.expectEqual(0, sut.points);
+    var sut = try Game.init(rng_impl.interface(), allocator);
+    defer sut.player.deinit();
 
-    sut.player = Player.init(); // player is at ScreenWidth/2, ScreenHeight/2 so, 200, 200
-    try testing.expectEqual(384, sut.player.pos.x);
-    try testing.expectEqual(184, sut.player.pos.y);
+    try testing.expectEqual(0, sut.points);
+    try testing.expectEqual(384, sut.player.body.items[0].pos.x);
+    try testing.expectEqual(184, sut.player.body.items[0].pos.y);
 
     sut.apple = Apple.init(0, 0);
 
