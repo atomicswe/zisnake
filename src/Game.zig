@@ -45,7 +45,8 @@ pub fn gameLoop(self: *Game) !void {
         if (self.detectCollision()) {
             self.points += 1;
             self.apple = null;
-            std.log.info("player received +1 points. Current points: {d}", .{self.points});
+            log.info("player received +1 points. Current points: {d}", .{self.points});
+            try self.player.addPartToBody();
         }
 
         self.handleKeyPressed();

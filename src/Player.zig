@@ -19,12 +19,44 @@ pub const Direction = enum {
     left,
 };
 
+// TODO: move to its own file
 pub const Part = struct {
     pos: Vector2,
     isHead: bool = false,
     velocity: Vector2 = Vector2.init(0, 0),
     oldVelocity: ?Vector2 = null,
     turnPoint: ?Vector2 = null,
+
+    // TODO: add tests
+    fn movePart(self: *Part, player: Player) void {
+        if (self.turnPoint != null and self.pos.equals(self.turnPoint.?)) {
+            log.info("turn point, x: {d:.2}, y: {d:.2}", .{ self.turnPoint.?.x, self.turnPoint.?.y });
+            log.info("old velocity, x: {d:.2}, y: {d:.2}", .{ self.oldVelocity.?.x, self.oldVelocity.?.y });
+            log.info("velocity, x: {d:.2}, y: {d:.2}", .{ self.velocity.x, self.velocity.y });
+
+            self.turnPoint = null;
+            self.oldVelocity = null;
+        }
+
+        if (self.turnPoint == null) {
+            self.pos = Vector2.add(self.pos, self.velocity);
+        } else {
+            if (self.oldVelocity == null) @panic("oldVelocity is not set");
+            self.pos = Vector2.add(self.pos, self.oldVelocity.?);
+        }
+
+        if (self.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
+            self.pos.x = 0;
+        } else if (self.pos.x < 0 - player.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
+            self.pos.x = vars.ScreenWidth;
+        }
+
+        if (self.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
+            self.pos.y = 0;
+        } else if (self.pos.y < 0 - player.size.y and self.velocity.equals(Vector2.init(0, -1))) {
+            self.pos.y = vars.ScreenHeight;
+        }
+    }
 };
 
 const PlayerSize: f32 = 32;
@@ -51,29 +83,7 @@ pub fn deinit(self: *Player) void {
 
 pub fn drawPlayer(self: *Player) void {
     for (self.body.items) |*part| {
-        if (part.turnPoint != null and part.pos.equals(part.turnPoint.?)) {
-            part.turnPoint = null;
-            part.oldVelocity = null;
-        }
-
-        if (part.turnPoint == null) {
-            part.pos = Vector2.add(part.pos, part.velocity);
-        } else {
-            if (part.oldVelocity == null) @panic("oldVelocity is not set");
-            part.pos = Vector2.add(part.pos, part.oldVelocity.?);
-        }
-
-        if (part.pos.x > vars.ScreenWidth and part.velocity.equals(Vector2.init(1, 0))) {
-            part.pos.x = 0;
-        } else if (part.pos.x < 0 - self.size.x and part.velocity.equals(Vector2.init(-1, 0))) {
-            part.pos.x = vars.ScreenWidth;
-        }
-
-        if (part.pos.y > vars.ScreenHeight and part.velocity.equals(Vector2.init(0, 1))) {
-            part.pos.y = 0;
-        } else if (part.pos.y < 0 - self.size.y and part.velocity.equals(Vector2.init(0, -1))) {
-            part.pos.y = vars.ScreenHeight;
-        }
+        part.movePart(self.*);
 
         rl.drawRectangleV(part.pos, self.size, self.color);
         if (part.isHead) self.drawSafeArea();
@@ -85,8 +95,19 @@ fn drawSafeArea(self: *Player) void {
     rl.drawRectangleLines(@intFromFloat(safeArea.x), @intFromFloat(safeArea.y), @intFromFloat(self.safeAreaSize.x), @intFromFloat(self.safeAreaSize.y), .green);
 }
 
+pub fn addPartToBody(self: *Player) !void {
+    if (self.body.items.len < 1) @panic("body has less than one part");
+    const last = self.body.getLast();
+
+    const invV = last.velocity.scale(-1);
+    const v = invV.multiply(self.size);
+    const newPos = last.pos.add(v);
+
+    const newPart = Part{ .pos = newPos, .velocity = last.velocity };
+    try self.body.append(self.allocator, newPart);
+}
+
 pub fn switchDirection(self: *Player, direction: Direction) void {
-    log.info("switch direction to: {s}", .{@tagName(direction)});
     var newV: Vector2 = undefined;
     switch (direction) {
         .up => {
@@ -103,10 +124,13 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
         },
     }
 
+    if (newV.equals(self.body.items[0].velocity)) return;
+
+    log.info("switch direction to: {s}", .{@tagName(direction)});
     for (self.body.items) |*part| {
         if (!part.isHead) {
             part.oldVelocity = part.velocity;
-            part.turnPoint = part.pos;
+            part.turnPoint = self.body.items[0].pos;
         }
 
         part.velocity = newV;
@@ -211,5 +235,24 @@ test "get safe area limits" {
 
         try testing.expectEqual(Vector2.init(0, 242), safeArea[0]);
         try testing.expectEqual(Vector2.init(128, 342), safeArea[1]);
+    }
+}
+
+test "add part to body" {
+    const allocator = std.testing.allocator;
+    var sut = try init(allocator);
+    defer sut.deinit();
+
+    try testing.expect(sut.body.items.len == 1);
+    try testing.expect(sut.body.items[0].isHead == true);
+
+    {
+        sut.body.items[0].pos = .init(0, 0);
+        sut.body.items[0].velocity = .init(-1, 0);
+
+        try sut.addPartToBody();
+        try testing.expect(sut.body.items.len == 2);
+        try testing.expect(sut.body.items[1].isHead == false);
+        try testing.expectEqual(Vector2.init(32, 0), sut.body.items[1].pos);
     }
 }
