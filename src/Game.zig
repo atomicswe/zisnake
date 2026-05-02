@@ -49,7 +49,7 @@ pub fn gameLoop(self: *Game) !void {
             try self.player.addPartToBody();
         }
 
-        self.handleKeyPressed();
+        try self.handleKeyPressed();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -67,12 +67,12 @@ pub fn gameLoop(self: *Game) !void {
     }
 }
 
-fn handleKeyPressed(self: *Game) void {
+fn handleKeyPressed(self: *Game) !void {
     switch (rl.getKeyPressed()) {
-        .up => self.player.switchDirection(.up),
-        .down => self.player.switchDirection(.down),
-        .left => self.player.switchDirection(.left),
-        .right => self.player.switchDirection(.right),
+        .up => try self.player.switchDirection(.up),
+        .down => try self.player.switchDirection(.down),
+        .left => try self.player.switchDirection(.left),
+        .right => try self.player.switchDirection(.right),
         else => return,
     }
 }

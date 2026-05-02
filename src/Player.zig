@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 const ArrayList = std.ArrayList;
+const Deque = std.Deque;
 const Allocator = std.mem.Allocator;
 
 const rl = @import("raylib");
@@ -21,39 +22,54 @@ pub const Direction = enum {
 
 // TODO: move to its own file
 pub const Part = struct {
+    pub const Memory = struct {
+        turnPoint: Vector2,
+        oldVelocity: Vector2,
+        newVelocity: Vector2,
+    };
+
     pos: Vector2,
     isHead: bool = false,
     velocity: Vector2 = Vector2.init(0, 0),
-    oldVelocity: ?Vector2 = null,
-    turnPoint: ?Vector2 = null,
+    memories: Deque(Memory) = .empty,
+
+    fn deinit(self: *Part, allocator: Allocator) void {
+        self.memories.deinit(allocator);
+    }
 
     // TODO: add tests
     fn movePart(self: *Part, player: Player) void {
-        if (self.turnPoint != null and self.pos.equals(self.turnPoint.?)) {
-            log.info("turn point, x: {d:.2}, y: {d:.2}", .{ self.turnPoint.?.x, self.turnPoint.?.y });
-            log.info("old velocity, x: {d:.2}, y: {d:.2}", .{ self.oldVelocity.?.x, self.oldVelocity.?.y });
-            log.info("velocity, x: {d:.2}, y: {d:.2}", .{ self.velocity.x, self.velocity.y });
+        if (self.memories.front()) |memory| {
+            const oldV = memory.oldVelocity;
 
-            self.turnPoint = null;
-            self.oldVelocity = null;
+            const hor = oldV.equals(.init(1, 0)) or oldV.equals(.init(-1, 0));
+            const ver = oldV.equals(.init(0, 1)) or oldV.equals(.init(0, -1));
+
+            const reachedTurnPoint =
+                (hor and self.pos.x == memory.turnPoint.x) or
+                (ver and self.pos.y == memory.turnPoint.y);
+
+            if (reachedTurnPoint) {
+                self.pos = memory.turnPoint;
+                self.velocity = memory.newVelocity;
+                _ = self.memories.popFront();
+            } else {
+                self.pos = self.pos.add(oldV);
+                return;
+            }
         }
 
-        if (self.turnPoint == null) {
-            self.pos = Vector2.add(self.pos, self.velocity);
-        } else {
-            if (self.oldVelocity == null) @panic("oldVelocity is not set");
-            self.pos = Vector2.add(self.pos, self.oldVelocity.?);
-        }
+        self.pos = self.pos.add(self.velocity);
 
-        if (self.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
+        if (self.pos.x > vars.ScreenWidth and self.velocity.equals(.init(1, 0))) {
             self.pos.x = 0;
-        } else if (self.pos.x < 0 - player.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
+        } else if (self.pos.x < 0 - player.size.x and self.velocity.equals(.init(-1, 0))) {
             self.pos.x = vars.ScreenWidth;
         }
 
-        if (self.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
+        if (self.pos.y > vars.ScreenHeight and self.velocity.equals(.init(0, 1))) {
             self.pos.y = 0;
-        } else if (self.pos.y < 0 - player.size.y and self.velocity.equals(Vector2.init(0, -1))) {
+        } else if (self.pos.y < 0 - player.size.y and self.velocity.equals(.init(0, -1))) {
             self.pos.y = vars.ScreenHeight;
         }
     }
@@ -78,6 +94,9 @@ pub fn init(allocator: Allocator) !Player {
 }
 
 pub fn deinit(self: *Player) void {
+    for (self.body.items) |*part| {
+        part.deinit(self.allocator);
+    }
     self.body.deinit(self.allocator);
 }
 
@@ -107,33 +126,31 @@ pub fn addPartToBody(self: *Player) !void {
     try self.body.append(self.allocator, newPart);
 }
 
-pub fn switchDirection(self: *Player, direction: Direction) void {
+pub fn switchDirection(self: *Player, direction: Direction) !void {
     var newV: Vector2 = undefined;
     switch (direction) {
-        .up => {
-            newV = Vector2.init(0, -1);
-        },
-        .down => {
-            newV = Vector2.init(0, 1);
-        },
-        .left => {
-            newV = Vector2.init(-1, 0);
-        },
-        .right => {
-            newV = Vector2.init(1, 0);
-        },
+        .up => newV = .init(0, -1),
+        .down => newV = .init(0, 1),
+        .left => newV = .init(-1, 0),
+        .right => newV = .init(1, 0),
     }
 
-    if (newV.equals(self.body.items[0].velocity)) return;
-
+    const head = &self.body.items[0];
+    if (self.body.items.len > 1 and head.velocity.x == -newV.x and head.velocity.y == -newV.y) {
+        return;
+    }
     log.info("switch direction to: {s}", .{@tagName(direction)});
-    for (self.body.items) |*part| {
-        if (!part.isHead) {
-            part.oldVelocity = part.velocity;
-            part.turnPoint = self.body.items[0].pos;
-        }
 
-        part.velocity = newV;
+    const turnPoint = head.pos;
+    const oldV = head.velocity;
+
+    head.velocity = newV;
+    for (self.body.items[1..]) |*part| {
+        try part.memories.pushBack(self.allocator, .{
+            .turnPoint = turnPoint,
+            .oldVelocity = oldV,
+            .newVelocity = newV,
+        });
     }
 }
 
@@ -162,7 +179,7 @@ test "player init" {
     try testing.expect(sut.body.items[0].isHead == true);
 }
 
-test "switch direction success" {
+test "switch direction" {
     const allocator = std.testing.allocator;
     var sut = try init(allocator);
     defer sut.deinit();
@@ -171,17 +188,20 @@ test "switch direction success" {
 
     try sut.body.append(allocator, Part{ .pos = .init(0, 0) });
 
-    sut.switchDirection(.up);
+    try sut.switchDirection(.up);
     try testing.expectEqual(Vector2.init(0, -1), sut.body.items[0].velocity);
-    try testing.expectEqual(null, sut.body.items[0].oldVelocity);
-    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].velocity);
-    try testing.expectEqual(Vector2.init(0, 0), sut.body.items[1].oldVelocity);
+    try testing.expect(sut.body.items[0].memories.len == 0);
+    try testing.expectEqual(Vector2.init(0, 0), sut.body.items[1].memories.front().?.oldVelocity);
+    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].memories.front().?.newVelocity);
 
-    sut.switchDirection(.left);
+    // temporary, to emulate a move
+    _ = sut.body.items[1].memories.popFront();
+
+    try sut.switchDirection(.left);
     try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[0].velocity);
-    try testing.expectEqual(null, sut.body.items[0].oldVelocity);
-    try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[1].velocity);
-    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].oldVelocity);
+    try testing.expect(sut.body.items[0].memories.len == 0);
+    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].memories.front().?.oldVelocity);
+    try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[1].memories.front().?.newVelocity);
 }
 
 test "get safe area limits" {
