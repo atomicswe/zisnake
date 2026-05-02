@@ -19,25 +19,27 @@ pub const Direction = enum {
     left,
 };
 
-pub const Parts = struct {
+pub const Part = struct {
     pos: Vector2,
     isHead: bool = false,
     velocity: Vector2 = Vector2.init(0, 0),
+    oldVelocity: ?Vector2 = null,
+    turnPoint: ?Vector2 = null,
 };
 
 const PlayerSize: f32 = 32;
 
-body: ArrayList(Parts),
+body: ArrayList(Part),
 size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
 color: Color,
 safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
 allocator: Allocator,
 
 pub fn init(allocator: Allocator) !Player {
-    var body: ArrayList(Parts) = .empty;
+    var body: ArrayList(Part) = .empty;
 
     const pos = Vector2.init((vars.ScreenWidth / 2 - PlayerSize / 2), (vars.ScreenHeight / 2) - (PlayerSize / 2));
-    const head = Parts{ .pos = pos, .isHead = true };
+    const head = Part{ .pos = pos, .isHead = true };
     try body.append(allocator, head);
 
     return .{ .body = body, .color = .maroon, .allocator = allocator };
@@ -49,7 +51,17 @@ pub fn deinit(self: *Player) void {
 
 pub fn drawPlayer(self: *Player) void {
     for (self.body.items) |*part| {
-        part.pos = Vector2.add(part.pos, part.velocity);
+        if (part.turnPoint != null and part.pos.equals(part.turnPoint.?)) {
+            part.turnPoint = null;
+            part.oldVelocity = null;
+        }
+
+        if (part.turnPoint == null) {
+            part.pos = Vector2.add(part.pos, part.velocity);
+        } else {
+            if (part.oldVelocity == null) @panic("oldVelocity is not set");
+            part.pos = Vector2.add(part.pos, part.oldVelocity.?);
+        }
 
         if (part.pos.x > vars.ScreenWidth and part.velocity.equals(Vector2.init(1, 0))) {
             part.pos.x = 0;
@@ -75,23 +87,29 @@ fn drawSafeArea(self: *Player) void {
 
 pub fn switchDirection(self: *Player, direction: Direction) void {
     log.info("switch direction to: {s}", .{@tagName(direction)});
+    var newV: Vector2 = undefined;
     switch (direction) {
         .up => {
-            self.body.items[0].velocity.x = 0;
-            self.body.items[0].velocity.y = -1;
+            newV = Vector2.init(0, -1);
         },
         .down => {
-            self.body.items[0].velocity.x = 0;
-            self.body.items[0].velocity.y = 1;
+            newV = Vector2.init(0, 1);
         },
         .left => {
-            self.body.items[0].velocity.x = -1;
-            self.body.items[0].velocity.y = 0;
+            newV = Vector2.init(-1, 0);
         },
         .right => {
-            self.body.items[0].velocity.x = 1;
-            self.body.items[0].velocity.y = 0;
+            newV = Vector2.init(1, 0);
         },
+    }
+
+    for (self.body.items) |*part| {
+        if (!part.isHead) {
+            part.oldVelocity = part.velocity;
+            part.turnPoint = part.pos;
+        }
+
+        part.velocity = newV;
     }
 }
 
@@ -127,11 +145,19 @@ test "switch direction success" {
 
     try testing.expectEqual(Vector2.init(0, 0), sut.body.items[0].velocity);
 
+    try sut.body.append(allocator, Part{ .pos = .init(0, 0) });
+
     sut.switchDirection(.up);
     try testing.expectEqual(Vector2.init(0, -1), sut.body.items[0].velocity);
+    try testing.expectEqual(null, sut.body.items[0].oldVelocity);
+    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].velocity);
+    try testing.expectEqual(Vector2.init(0, 0), sut.body.items[1].oldVelocity);
 
     sut.switchDirection(.left);
     try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[0].velocity);
+    try testing.expectEqual(null, sut.body.items[0].oldVelocity);
+    try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[1].velocity);
+    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[1].oldVelocity);
 }
 
 test "get safe area limits" {
