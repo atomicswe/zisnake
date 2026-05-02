@@ -54,12 +54,12 @@ pub const Part = struct {
                 self.velocity = memory.newVelocity;
                 _ = self.memories.popFront();
             } else {
-                self.pos = self.pos.add(oldV);
+                self.pos = self.pos.add(oldV.scale(player.speed));
                 return;
             }
         }
 
-        self.pos = self.pos.add(self.velocity);
+        self.pos = self.pos.add(self.velocity.scale(player.speed));
 
         if (self.pos.x > vars.ScreenWidth and self.velocity.equals(.init(1, 0))) {
             self.pos.x = 0;
@@ -81,6 +81,7 @@ body: ArrayList(Part),
 size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
 color: Color,
 safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
+speed: f32 = 1,
 allocator: Allocator,
 
 pub fn init(allocator: Allocator) !Player {

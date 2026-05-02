@@ -47,6 +47,7 @@ pub fn gameLoop(self: *Game) !void {
             self.apple = null;
             log.info("player received +1 points. Current points: {d}", .{self.points});
             try self.player.addPartToBody();
+            self.player.speed *= 1.1;
         }
 
         try self.handleKeyPressed();
@@ -133,38 +134,41 @@ fn detectCollision(self: *Game) bool {
     const player: Player = self.player;
     const apple: Apple = self.apple orelse return false;
 
+    const playerLeft = player.body.items[0].pos.x;
+    const playerRight = playerLeft + player.size.y;
+    const playerTop = player.body.items[0].pos.y;
+    const playerBottom = playerTop + player.size.y;
+
     {
-        // if player.top == apple.bottom -> collision
         const appleBottom = apple.center.add(.init(0, apple.radius));
-        if (appleBottom.y == player.body.items[0].pos.y and (appleBottom.x >= player.body.items[0].pos.x and appleBottom.x <= player.body.items[0].pos.x + player.size.x)) {
-            log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, player.body.items[0].pos.y });
-            return true;
-        }
-    }
-
-    {
-        // if player.bottom == apple.top -> collision
         const appleTop = apple.center.add(.init(0, -apple.radius));
-        if (appleTop.y == (player.body.items[0].pos.y + player.size.y) and (appleTop.x >= player.body.items[0].pos.x and appleTop.x <= player.body.items[0].pos.x + player.size.x)) {
-            log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, player.body.items[0].pos.y });
+
+        // if player.top == apple.bottom -> collision
+        if ((appleBottom.y >= playerTop and appleBottom.y < playerBottom) and (appleBottom.x >= playerLeft and appleBottom.x <= playerRight)) {
+            log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, appleBottom.y });
+            return true;
+        }
+
+        // if player.bottom == apple.top -> collision
+        if ((appleTop.y <= playerBottom and appleTop.y > playerTop) and (appleTop.x >= playerLeft and appleTop.x <= playerRight)) {
+            log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, appleTop.y });
             return true;
         }
     }
 
     {
-        // if player.left == apple.right -> collision
         const appleRight = apple.center.add(.init(apple.radius, 0));
-        if (appleRight.x == player.body.items[0].pos.x and (appleRight.y >= player.body.items[0].pos.y and appleRight.y <= player.body.items[0].pos.y + player.size.y)) {
-            log.info("collision (player.left == apple.right) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleRight.y });
+        const appleLeft = apple.center.add(.init(-apple.radius, 0));
+
+        // if player.left == apple.right -> collision
+        if ((appleRight.x >= playerLeft and appleRight.x < playerRight) and (appleRight.y >= playerTop and appleRight.y <= playerBottom)) {
+            log.info("collision (player.left == apple.right) detected at x: {d}, y: {d}", .{ appleRight.x, appleRight.y });
             return true;
         }
-    }
 
-    {
         // if player.right == apple.left -> collision
-        const appleLeft = apple.center.add(.init(-apple.radius, 0));
-        if (appleLeft.x == (player.body.items[0].pos.x + player.size.x) and (appleLeft.y >= player.body.items[0].pos.y and appleLeft.y <= player.body.items[0].pos.y + player.size.y)) {
-            log.info("collision (player.right == apple.left) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleLeft.y });
+        if ((appleLeft.x <= playerRight and appleLeft.x > playerLeft) and (appleLeft.y >= playerTop and appleLeft.y <= playerBottom + player.size.y)) {
+            log.info("collision (player.right == apple.left) detected at x: {d}, y: {d}", .{ appleLeft.x, appleLeft.y });
             return true;
         }
     }
