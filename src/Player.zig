@@ -22,6 +22,7 @@ pub const Direction = enum {
 pub const Parts = struct {
     pos: Vector2,
     isHead: bool = false,
+    velocity: Vector2 = Vector2.init(0, 0),
 };
 
 const PlayerSize: f32 = 32;
@@ -29,7 +30,6 @@ const PlayerSize: f32 = 32;
 body: ArrayList(Parts),
 size: Vector2 = Vector2.init(PlayerSize, PlayerSize),
 color: Color,
-velocity: Vector2 = Vector2.init(0, 0),
 safeAreaSize: Vector2 = Vector2.init(150, 100), // area where enemies (apples) can not spawn in around the player
 allocator: Allocator,
 
@@ -49,17 +49,17 @@ pub fn deinit(self: *Player) void {
 
 pub fn drawPlayer(self: *Player) void {
     for (self.body.items) |*part| {
-        part.pos = Vector2.add(part.pos, self.velocity);
+        part.pos = Vector2.add(part.pos, part.velocity);
 
-        if (part.pos.x > vars.ScreenWidth and self.velocity.equals(Vector2.init(1, 0))) {
+        if (part.pos.x > vars.ScreenWidth and part.velocity.equals(Vector2.init(1, 0))) {
             part.pos.x = 0;
-        } else if (part.pos.x < 0 - self.size.x and self.velocity.equals(Vector2.init(-1, 0))) {
+        } else if (part.pos.x < 0 - self.size.x and part.velocity.equals(Vector2.init(-1, 0))) {
             part.pos.x = vars.ScreenWidth;
         }
 
-        if (part.pos.y > vars.ScreenHeight and self.velocity.equals(Vector2.init(0, 1))) {
+        if (part.pos.y > vars.ScreenHeight and part.velocity.equals(Vector2.init(0, 1))) {
             part.pos.y = 0;
-        } else if (part.pos.y < 0 - self.size.y and self.velocity.equals(Vector2.init(0, -1))) {
+        } else if (part.pos.y < 0 - self.size.y and part.velocity.equals(Vector2.init(0, -1))) {
             part.pos.y = vars.ScreenHeight;
         }
 
@@ -77,20 +77,20 @@ pub fn switchDirection(self: *Player, direction: Direction) void {
     log.info("switch direction to: {s}", .{@tagName(direction)});
     switch (direction) {
         .up => {
-            self.velocity.x = 0;
-            self.velocity.y = -1;
+            self.body.items[0].velocity.x = 0;
+            self.body.items[0].velocity.y = -1;
         },
         .down => {
-            self.velocity.x = 0;
-            self.velocity.y = 1;
+            self.body.items[0].velocity.x = 0;
+            self.body.items[0].velocity.y = 1;
         },
         .left => {
-            self.velocity.x = -1;
-            self.velocity.y = 0;
+            self.body.items[0].velocity.x = -1;
+            self.body.items[0].velocity.y = 0;
         },
         .right => {
-            self.velocity.x = 1;
-            self.velocity.y = 0;
+            self.body.items[0].velocity.x = 1;
+            self.body.items[0].velocity.y = 0;
         },
     }
 }
@@ -125,13 +125,13 @@ test "switch direction success" {
     var sut = try init(allocator);
     defer sut.deinit();
 
-    try testing.expectEqual(Vector2.init(0, 0), sut.velocity);
+    try testing.expectEqual(Vector2.init(0, 0), sut.body.items[0].velocity);
 
     sut.switchDirection(.up);
-    try testing.expectEqual(Vector2.init(0, -1), sut.velocity);
+    try testing.expectEqual(Vector2.init(0, -1), sut.body.items[0].velocity);
 
     sut.switchDirection(.left);
-    try testing.expectEqual(Vector2.init(-1, 0), sut.velocity);
+    try testing.expectEqual(Vector2.init(-1, 0), sut.body.items[0].velocity);
 }
 
 test "get safe area limits" {
