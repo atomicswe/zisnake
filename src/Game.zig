@@ -7,6 +7,7 @@ const rl = @import("raylib");
 
 const Apple = @import("Apple.zig");
 const Player = @import("Player.zig");
+const Part = @import("Part.zig");
 const vars = @import("vars.zig");
 
 const log = std.log.scoped(.game);
@@ -143,41 +144,19 @@ fn spawnApple(self: *Game) Apple {
 }
 
 fn detectCollision(self: *Game) bool {
-    const player: Player = self.player;
-    const apple: Apple = self.apple orelse return false;
+    const playerHead: Part = self.player.body.items[0];
+    if (!playerHead.isHead) @panic("head is not head");
 
-    {
-        // if player.top == apple.bottom -> collision
-        const appleBottom = apple.center.add(.init(0, apple.radius));
-        if (appleBottom.y == player.body.items[0].pos.y and (appleBottom.x >= player.body.items[0].pos.x and appleBottom.x <= player.body.items[0].pos.x + player.size.x)) {
-            log.info("collision (player.top == apple.bottom) detected at x: {d}, y: {d}", .{ appleBottom.x, player.body.items[0].pos.y });
-            return true;
-        }
-    }
+    var apple: Apple = self.apple orelse return false;
+    const appleLimits = apple.getLimits();
 
-    {
-        // if player.bottom == apple.top -> collision
-        const appleTop = apple.center.add(.init(0, -apple.radius));
-        if (appleTop.y == (player.body.items[0].pos.y + player.size.y) and (appleTop.x >= player.body.items[0].pos.x and appleTop.x <= player.body.items[0].pos.x + player.size.x)) {
-            log.info("collision (player.bottom == apple.top) detected at x: {d}, y: {d}", .{ appleTop.x, player.body.items[0].pos.y });
-            return true;
-        }
-    }
+    const headMin = playerHead.pos;
+    const headMax = playerHead.pos.add(self.player.size);
 
-    {
-        // if player.left == apple.right -> collision
-        const appleRight = apple.center.add(.init(apple.radius, 0));
-        if (appleRight.x == player.body.items[0].pos.x and (appleRight.y >= player.body.items[0].pos.y and appleRight.y <= player.body.items[0].pos.y + player.size.y)) {
-            log.info("collision (player.left == apple.right) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleRight.y });
-            return true;
-        }
-    }
-
-    {
-        // if player.right == apple.left -> collision
-        const appleLeft = apple.center.add(.init(-apple.radius, 0));
-        if (appleLeft.x == (player.body.items[0].pos.x + player.size.x) and (appleLeft.y >= player.body.items[0].pos.y and appleLeft.y <= player.body.items[0].pos.y + player.size.y)) {
-            log.info("collision (player.right == apple.left) detected at x: {d}, y: {d}", .{ player.body.items[0].pos.x, appleLeft.y });
+    for (appleLimits) |limit| {
+        const hor = limit.x >= headMin.x and limit.x <= headMax.x;
+        const ver = limit.y >= headMin.y and limit.y <= headMax.y;
+        if (hor and ver) {
             return true;
         }
     }

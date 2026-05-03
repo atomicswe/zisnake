@@ -39,6 +39,15 @@ pub fn drawApple(self: *Apple) void {
     rl.drawCircleV(self.center, self.radius, self.color);
 }
 
+pub fn getLimits(self: *Apple) [4]Vector2 {
+    return [4]Vector2{
+        .init(self.center.x - self.radius, self.center.y),
+        .init(self.center.x + self.radius, self.center.y),
+        .init(self.center.x, self.center.y - self.radius),
+        .init(self.center.x, self.center.y + self.radius),
+    };
+}
+
 test "apple init" {
     const sut = init(0, 0);
     try testing.expectEqual(Vector2.init(0 + sut.radius, 0 + sut.radius), sut.center);
