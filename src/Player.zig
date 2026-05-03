@@ -134,12 +134,12 @@ pub fn detectHeadCollision(self: *Player) bool {
     const head = self.body.items[0];
     if (!head.isHead) @panic("head is not head");
 
-    if (self.body.items.len <= 1) return false;
+    if (self.body.items.len <= 2) return false;
 
     const headMin = head.pos;
     const headMax = head.pos.add(self.size);
 
-    for (self.body.items[1..]) |*part| {
+    for (self.body.items[2..]) |*part| {
         const vertices = part.getVertices(self.size);
 
         for (vertices) |vertice| {
