@@ -4,6 +4,7 @@ const Random = std.Random;
 const math = std.math;
 
 const rl = @import("raylib");
+const Vector2 = rl.Vector2;
 
 const Apple = @import("Apple.zig");
 const Player = @import("Player.zig");
@@ -17,6 +18,7 @@ player: Player,
 apple: ?Apple = null,
 points: i32 = 0,
 rand: Random,
+gameOver: bool = false,
 
 pub fn init(rand: Random, allocator: std.mem.Allocator) !Game {
     const p = try Player.init(allocator);
@@ -36,8 +38,21 @@ pub fn deinit(self: *Game) void {
 
 pub fn gameLoop(self: *Game) !void {
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
-        // Update
-        //----------------------------------------------------------------------------------
+        if (self.gameOver) {
+            rl.beginDrawing();
+            defer rl.endDrawing();
+
+            try self.drawGameOver();
+            continue;
+        }
+
+        if (self.player.detectHeadCollision()) {
+            log.info("collision detected between head and body part", .{});
+            log.info("GAME OVER", .{});
+            self.gameOver = true;
+            continue;
+        }
+
         if (self.apple == null) {
             log.info("creating new apple", .{});
             self.apple = self.spawnApple();
@@ -50,16 +65,8 @@ pub fn gameLoop(self: *Game) !void {
             try self.player.addPartToBody();
         }
 
-        if (self.player.detectHeadCollision()) {
-            log.info("collision detected between head and body part", .{});
-            log.info("GAME OVER", .{});
-        }
-
         try self.handleKeyPressed();
-        //----------------------------------------------------------------------------------
 
-        // Draw
-        //----------------------------------------------------------------------------------
         rl.beginDrawing();
         defer rl.endDrawing();
 
@@ -71,7 +78,6 @@ pub fn gameLoop(self: *Game) !void {
         }
 
         try self.drawUI();
-        //----------------------------------------------------------------------------------
     }
 }
 
@@ -79,6 +85,28 @@ fn drawUI(self: *Game) !void {
     var pointsTextBuf: [256]u8 = undefined;
     const pointsText = try std.fmt.bufPrintSentinel(&pointsTextBuf, "Points: {d}", .{self.points}, 0);
     rl.drawText(pointsText, 12, 12, 32, .white);
+}
+
+fn drawGameOver(self: *Game) !void {
+    rl.clearBackground(.black);
+    const fontSize: i32 = 64;
+    const gameOverText: [:0]const u8 = "GAME OVER!";
+    const textWidth = rl.measureText(gameOverText, fontSize);
+    const size = Vector2.init(@floatFromInt(textWidth), fontSize);
+
+    const textX: i32 = @trunc((vars.ScreenWidth - size.x) / 2);
+    const textY: i32 = @trunc((vars.ScreenHeight - size.y) / 2);
+    rl.drawText(gameOverText, textX, textY, fontSize, .red);
+
+    const pointsTextFontSize: i32 = fontSize / 2;
+    var pointsTextBuf: [256]u8 = undefined;
+    const pointsText = try std.fmt.bufPrintSentinel(&pointsTextBuf, "You made {d} points!", .{self.points}, 0);
+    const pointsTextWidth = rl.measureText(pointsText, pointsTextFontSize);
+    const pointsTextSize = Vector2.init(@floatFromInt(pointsTextWidth), pointsTextFontSize);
+
+    const pointsTextX: i32 = @trunc((vars.ScreenWidth - pointsTextSize.x) / 2);
+    const pointsTextY: i32 = @trunc((vars.ScreenHeight - pointsTextSize.y) / 2 + (size.y + 4));
+    rl.drawText(pointsText, pointsTextX, pointsTextY, pointsTextFontSize, .white);
 }
 
 fn handleKeyPressed(self: *Game) !void {
@@ -91,7 +119,7 @@ fn handleKeyPressed(self: *Game) !void {
     }
 }
 
-fn distance(p1: rl.Vector2, p2: rl.Vector2) f32 {
+fn distance(p1: Vector2, p2: Vector2) f32 {
     const hor = p2.x - p1.x;
     const ver = p2.y - p1.y;
     const squareSum = math.exp2(hor) + math.exp2(ver);
@@ -112,28 +140,28 @@ fn spawnApple(self: *Game) Apple {
     var yMin: i32 = 0;
     var yMax: i32 = vars.ScreenHeight;
 
-    const left = distance(rl.Vector2.init(0, safeAreaLimits[0].y), safeAreaLimits[0]);
-    const right = distance(safeAreaLimits[1], rl.Vector2.init(vars.ScreenWidth, safeAreaLimits[1].y));
+    const left = distance(Vector2.init(0, safeAreaLimits[0].y), safeAreaLimits[0]);
+    const right = distance(safeAreaLimits[1], Vector2.init(vars.ScreenWidth, safeAreaLimits[1].y));
     if (left == right) {
         const p = self.rand.float(f32);
-        xMin = if (p >= 0.5) @intFromFloat(safeAreaLimits[1].x) else xMin;
-        xMax = if (p < 0.5) @intFromFloat(safeAreaLimits[0].x) else xMax;
+        xMin = if (p >= 0.5) @trunc(safeAreaLimits[1].x) else xMin;
+        xMax = if (p < 0.5) @trunc(safeAreaLimits[0].x) else xMax;
     } else if (left > right) {
-        xMax = @intFromFloat(safeAreaLimits[0].x);
+        xMax = @trunc(safeAreaLimits[0].x);
     } else {
-        xMin = @intFromFloat(safeAreaLimits[1].x);
+        xMin = @trunc(safeAreaLimits[1].x);
     }
 
-    const top = distance(rl.Vector2.init(safeAreaLimits[0].x, 0), safeAreaLimits[0]);
-    const bottom = distance(safeAreaLimits[1], rl.Vector2.init(safeAreaLimits[1].x, vars.ScreenHeight));
+    const top = distance(Vector2.init(safeAreaLimits[0].x, 0), safeAreaLimits[0]);
+    const bottom = distance(safeAreaLimits[1], Vector2.init(safeAreaLimits[1].x, vars.ScreenHeight));
     if (top == bottom) {
         const p = self.rand.float(f32);
-        yMin = if (p >= 0.5) @intFromFloat(safeAreaLimits[1].y) else yMin;
-        yMax = if (p < 0.5) @intFromFloat(safeAreaLimits[0].y) else yMax;
+        yMin = if (p >= 0.5) @trunc(safeAreaLimits[1].y) else yMin;
+        yMax = if (p < 0.5) @trunc(safeAreaLimits[0].y) else yMax;
     } else if (top > bottom) {
-        yMax = @intFromFloat(safeAreaLimits[0].y);
+        yMax = @trunc(safeAreaLimits[0].y);
     } else {
-        yMin = @intFromFloat(safeAreaLimits[1].y);
+        yMin = @trunc(safeAreaLimits[1].y);
     }
 
     const x: f32 = @floatFromInt(self.rand.intRangeAtMost(i32, xMin, xMax));

@@ -57,7 +57,7 @@ pub fn drawPlayer(self: *Player) void {
 
 fn drawSafeArea(self: *Player) void {
     const safeArea = self.getSafeAreaLimits()[0];
-    rl.drawRectangleLines(@intFromFloat(safeArea.x), @intFromFloat(safeArea.y), @intFromFloat(self.safeAreaSize.x), @intFromFloat(self.safeAreaSize.y), .green);
+    rl.drawRectangleLines(@trunc(safeArea.x), @trunc(safeArea.y), @trunc(self.safeAreaSize.x), @trunc(self.safeAreaSize.y), .green);
 }
 
 pub fn addPartToBody(self: *Player) !void {
