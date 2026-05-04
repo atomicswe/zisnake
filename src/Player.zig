@@ -3,12 +3,12 @@ const testing = std.testing;
 const ArrayList = std.ArrayList;
 const Deque = std.Deque;
 const Allocator = std.mem.Allocator;
-const Part = @import("Part.zig");
 
 const rl = @import("raylib");
 const Vector2 = rl.Vector2;
 const Color = rl.Color;
 
+const Part = @import("Part.zig");
 const vars = @import("vars.zig");
 
 const log = std.log.scoped(.player);

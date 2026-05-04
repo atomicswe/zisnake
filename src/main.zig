@@ -1,4 +1,5 @@
 const std = @import("std");
+
 const Game = @import("Game.zig");
 
 pub fn main(init: std.process.Init) anyerror!void {
@@ -7,7 +8,7 @@ pub fn main(init: std.process.Init) anyerror!void {
     var game = try Game.init(source.interface(), init.gpa);
     defer game.deinit();
 
-    game.setup();
+    try game.setup();
 
     try game.gameLoop();
 }

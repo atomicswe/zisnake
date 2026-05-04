@@ -7,8 +7,9 @@ const rl = @import("raylib");
 const Vector2 = rl.Vector2;
 
 const Apple = @import("Apple.zig");
-const Player = @import("Player.zig");
 const Part = @import("Part.zig");
+const Player = @import("Player.zig");
+const Sound = @import("Sound.zig");
 const vars = @import("vars.zig");
 
 const log = std.log.scoped(.game);
@@ -17,22 +18,30 @@ const Game = @This();
 player: Player,
 apple: ?Apple = null,
 points: i32 = 0,
-rand: Random,
 gameOver: bool = false,
+sound: Sound,
+rand: Random,
 
 pub fn init(rand: Random, allocator: std.mem.Allocator) !Game {
     const p = try Player.init(allocator);
+    const sound = Sound.init(allocator);
 
-    return .{ .player = p, .rand = rand };
+    return .{ .player = p, .sound = sound, .rand = rand };
 }
 
-pub fn setup(_: *Game) void {
+pub fn setup(self: *Game) !void {
     rl.initWindow(vars.ScreenWidth, vars.ScreenHeight, "zisnake");
     rl.setTargetFPS(60);
+    rl.initAudioDevice();
+
+    try self.sound.loadSound("assets/pickup.wav", "pickup");
+    try self.sound.loadSound("assets/gameover.wav", "gameover");
 }
 
 pub fn deinit(self: *Game) void {
     self.player.deinit();
+    self.sound.deinit();
+    rl.closeAudioDevice();
     rl.closeWindow();
 }
 
@@ -65,6 +74,7 @@ pub fn gameLoop(self: *Game) !void {
             log.info("collision detected between head and body part", .{});
             log.info("GAME OVER", .{});
             self.gameOver = true;
+            self.sound.playSound("gameover");
             continue;
         }
 
@@ -76,6 +86,7 @@ pub fn gameLoop(self: *Game) !void {
         if (self.detectCollision()) {
             self.points += 1;
             self.apple = null;
+            self.sound.playSound("pickup");
             log.info("player received +1 points. Current points: {d}", .{self.points});
             try self.player.addPartToBody();
         }
