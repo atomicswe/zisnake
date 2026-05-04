@@ -29,7 +29,6 @@ pub fn deinit(self: *Part, allocator: Allocator) void {
     self.memories.deinit(allocator);
 }
 
-// TODO: add tests
 pub fn movePart(self: *Part, playerSize: Vector2) void {
     if (self.memories.front()) |memory| {
         const oldV = memory.oldVelocity;
@@ -66,7 +65,6 @@ pub fn movePart(self: *Part, playerSize: Vector2) void {
     }
 }
 
-// TODO: add tests
 pub fn getVertices(self: *Part, size: Vector2) [4]Vector2 {
     return [4]Vector2{
         self.pos,
@@ -96,4 +94,17 @@ test "move part" {
         try testing.expectEqual(Vector2.init(1, 0), sut.pos);
         try testing.expect(sut.memories.len == 0);
     }
+}
+
+test "get vertices" {
+    var sut = Part{ .pos = .init(100, 100), .memories = .empty };
+    try testing.expectEqual(Vector2.init(100, 100), sut.pos);
+
+    const vertices = sut.getVertices(.init(32, 32));
+    try testing.expect(vertices.len == 4);
+
+    try testing.expectEqual(Vector2.init(100, 100), vertices[0]);
+    try testing.expectEqual(Vector2.init(132, 100), vertices[1]);
+    try testing.expectEqual(Vector2.init(100, 132), vertices[2]);
+    try testing.expectEqual(Vector2.init(132, 132), vertices[3]);
 }
