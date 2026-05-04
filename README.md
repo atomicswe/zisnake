@@ -4,6 +4,11 @@ zisnake is a very simple snake game made in Zig. It's purpose was not to be a fu
 
 ## Demo
 
+https://github.com/user-attachments/assets/e581e995-73ad-416e-bd52-81f89b4c9923
+
+https://github.com/user-attachments/assets/6153de24-45ff-401b-a505-c63852ef786f
+
+
 
 ## Purpose
 The purpose of this project, as mentioned above, was for me to learn Zig and [raylib](https://www.raylib.com).
@@ -40,7 +45,7 @@ And that's it. That's the whole game.
 
 As the purpose of this project wasn't to make a full-fledged snake clone, somethings are different or just don't work as they are supposed to. For example, you can lose the game by turning back and going through your own body:
 
-{{demo}}
+https://github.com/user-attachments/assets/e09c4785-ba90-4281-8260-6a7b1dbc10f5
 
 This happens because the movement in _zisnake_ is done pixel by pixel, which is not the "snake" way of doing things.
 
