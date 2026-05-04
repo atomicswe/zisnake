@@ -49,15 +49,8 @@ pub fn deinit(self: *Player) void {
 pub fn drawPlayer(self: *Player) void {
     for (self.body.items) |*part| {
         part.movePart(self.*.size);
-
         rl.drawRectangleV(part.pos, self.size, self.color);
-        if (part.isHead) self.drawSafeArea();
     }
-}
-
-fn drawSafeArea(self: *Player) void {
-    const safeArea = self.getSafeAreaLimits()[0];
-    rl.drawRectangleLines(@trunc(safeArea.x), @trunc(safeArea.y), @trunc(self.safeAreaSize.x), @trunc(self.safeAreaSize.y), .green);
 }
 
 pub fn addPartToBody(self: *Player) !void {
