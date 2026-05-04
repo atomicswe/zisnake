@@ -24,6 +24,7 @@ pub fn init(x: f32, y: f32) Apple {
         center.x = vars.ScreenWidth - 8; // - radius
     }
 
+    // apples shouldn't spawn on the points counter
     if (center.y - 8 < 50) {
         center.y = 50 + 8; // + radius
     }
@@ -50,7 +51,7 @@ pub fn getLimits(self: *Apple) [4]Vector2 {
 
 test "apple init" {
     const sut = init(0, 0);
-    try testing.expectEqual(Vector2.init(0 + sut.radius, 0 + sut.radius), sut.center);
+    try testing.expectEqual(Vector2.init(0 + sut.radius, 50 + sut.radius), sut.center);
 }
 
 test "apple init out-of-bounds" {
@@ -66,7 +67,7 @@ test "apple init out-of-bounds" {
 
     {
         const sut = init(100, -10);
-        try testing.expectEqual(Vector2.init(100, 0 + sut.radius), sut.center);
+        try testing.expectEqual(Vector2.init(100, 50 + sut.radius), sut.center);
     }
 
     {
@@ -76,7 +77,7 @@ test "apple init out-of-bounds" {
 
     {
         const sut = init(-10, -10);
-        try testing.expectEqual(Vector2.init(0 + sut.radius, 0 + sut.radius), sut.center);
+        try testing.expectEqual(Vector2.init(0 + sut.radius, 50 + sut.radius), sut.center);
     }
 
     {
@@ -91,6 +92,6 @@ test "apple init out-of-bounds" {
 
     {
         const sut = init(vars.ScreenWidth + 100, -10);
-        try testing.expectEqual(Vector2.init(vars.ScreenWidth - sut.radius, 0 + sut.radius), sut.center);
+        try testing.expectEqual(Vector2.init(vars.ScreenWidth - sut.radius, 50 + sut.radius), sut.center);
     }
 }
