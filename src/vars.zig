@@ -1,2 +1,2 @@
-pub const ScreenWidth = 800;
-pub const ScreenHeight = 400;
+pub const ScreenWidth: i32 = 800;
+pub const ScreenHeight: i32 = 400;

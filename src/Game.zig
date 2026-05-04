@@ -99,8 +99,13 @@ pub fn gameLoop(self: *Game) !void {
         rl.clearBackground(.black);
 
         self.player.drawPlayer();
-        if (self.apple != null) {
-            self.apple.?.drawApple();
+
+        if (self.player.body.items[0].velocity.equals(.init(0, 0))) { // player hasn't moved yet
+            self.drawMoveGuide();
+        } else {
+            if (self.apple != null) {
+                self.apple.?.drawApple();
+            }
         }
 
         try self.drawUI();
@@ -111,6 +116,17 @@ fn drawUI(self: *Game) !void {
     var pointsTextBuf: [256]u8 = undefined;
     const pointsText = try std.fmt.bufPrintSentinel(&pointsTextBuf, "Points: {d}", .{self.points}, 0);
     rl.drawText(pointsText, 12, 12, 32, .white);
+}
+
+fn drawMoveGuide(_: *Game) void {
+    const fontSize: i32 = 32;
+    const text: [:0]const u8 = "Use the arrow keys to move";
+    const textWidth = rl.measureText(text, fontSize);
+    const size = Vector2.init(@floatFromInt(textWidth), fontSize);
+
+    const textX: i32 = @trunc((vars.ScreenWidth - size.x) / 2);
+    const textY: i32 = @trunc((vars.ScreenHeight / 2) - size.y - 32);
+    rl.drawText(text, textX, textY, fontSize, .gray);
 }
 
 fn drawGameOver(self: *Game) !void {
