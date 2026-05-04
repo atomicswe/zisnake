@@ -19,13 +19,14 @@ zisnake is built using Zig 0.16.1 and [raylib](https://www.raylib.com).
 
 ## How to play
 
-To play zisnake, you must first install raylib on your machine. For mac users:
+To play zisnake, you must first install zig and raylib on your machine. For mac users:
 
 ```bash
+brew install zig
 brew install raylib
 ```
 
-Once you have raylib installed on your machine, you should clone the `zisnake` repo and run the code with:
+Once you have zig and raylib installed on your machine, you should clone the `zisnake` repo and run the code with:
 
 ```bash
 zig build run
