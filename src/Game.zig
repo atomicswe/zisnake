@@ -36,9 +36,24 @@ pub fn deinit(self: *Game) void {
     rl.closeWindow();
 }
 
+fn restartGame(self: *Game) !void {
+    const allocator = self.player.allocator;
+    self.player.deinit();
+    self.player = try Player.init(allocator);
+    self.apple = null;
+    self.points = 0;
+    self.gameOver = false;
+}
+
 pub fn gameLoop(self: *Game) !void {
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
         if (self.gameOver) {
+            if (rl.isKeyPressed(.r)) {
+                log.info("restarting game...", .{});
+                try self.restartGame();
+                continue;
+            }
+
             rl.beginDrawing();
             defer rl.endDrawing();
 
@@ -95,7 +110,7 @@ fn drawGameOver(self: *Game) !void {
     const size = Vector2.init(@floatFromInt(textWidth), fontSize);
 
     const textX: i32 = @trunc((vars.ScreenWidth - size.x) / 2);
-    const textY: i32 = @trunc((vars.ScreenHeight - size.y) / 2);
+    const textY: i32 = @trunc((vars.ScreenHeight - size.y) / 2 - (size.y));
     rl.drawText(gameOverText, textX, textY, fontSize, .red);
 
     const pointsTextFontSize: i32 = fontSize / 2;
@@ -105,8 +120,17 @@ fn drawGameOver(self: *Game) !void {
     const pointsTextSize = Vector2.init(@floatFromInt(pointsTextWidth), pointsTextFontSize);
 
     const pointsTextX: i32 = @trunc((vars.ScreenWidth - pointsTextSize.x) / 2);
-    const pointsTextY: i32 = @trunc((vars.ScreenHeight - pointsTextSize.y) / 2 + (size.y + 4));
-    rl.drawText(pointsText, pointsTextX, pointsTextY, pointsTextFontSize, .white);
+    const pointsTextY: i32 = @trunc((vars.ScreenHeight - pointsTextSize.y) / 2);
+    rl.drawText(pointsText, pointsTextX, pointsTextY, pointsTextFontSize, .green);
+
+    const restartFontSize: i32 = fontSize / 2;
+    const restartGameText: [:0]const u8 = "Press R to restart the game";
+    const restartTextWidth = rl.measureText(restartGameText, restartFontSize);
+    const restartSize = Vector2.init(@floatFromInt(restartTextWidth), restartFontSize);
+
+    const restartTextX: i32 = @trunc((vars.ScreenWidth - restartSize.x) / 2);
+    const restartTextY: i32 = @trunc((vars.ScreenHeight - restartSize.y) / 2 + (size.y));
+    rl.drawText(restartGameText, restartTextX, restartTextY, restartFontSize, .white);
 }
 
 fn handleKeyPressed(self: *Game) !void {

@@ -24,8 +24,8 @@ pub fn init(x: f32, y: f32) Apple {
         center.x = vars.ScreenWidth - 8; // - radius
     }
 
-    if (center.y - 8 < 0) {
-        center.y = 0 + 8; // + radius
+    if (center.y - 8 < 50) {
+        center.y = 50 + 8; // + radius
     }
 
     if (center.y + 8 > vars.ScreenHeight) {
